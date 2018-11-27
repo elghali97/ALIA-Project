@@ -48,7 +48,7 @@ isBoardFull(X):-piece(X,6,C),!, C\=='?', X1 is X+1, isBoardFull(X1).
 endGame(Winner):-winner(Winner).
 endGame('Draw'):-isBoardFull.
 
-/*ajout d'un jeton*/
+/*ajout d'un jeton dans une position valide*/
 add(NC,Player):-
     column(NC,N),
     N<7,
