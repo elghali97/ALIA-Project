@@ -1,0 +1,10 @@
+%%%%%%TODO HERE PUT USEFUL GENERAL PREDICATES %%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+play(Player) :- write('New turn for:'), writeln(Player),
+		displayBoard %in order to print it
+		
