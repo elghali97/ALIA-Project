@@ -8,38 +8,38 @@
 
   init:-init_c(7),init_p(1,6).
 
-  % Prédicat init_c(7) qui crée les colonnes vides
+  % PrÃ©dicat init_c(7) qui crÃ©e les colonnes vides
   init_c(0).
   init_c(N):-assert(column(N,0)),N1 is N-1,init_c(N1).
 
-  % Prédicat init_p(1,6) qui crée les cases vides
+  % PrÃ©dicat init_p(1,6) qui crÃ©e les cases vides
   init_p(7,1):-assert(piece(7,1,'?')).
   init_p(7,Y):-assert(piece(X,6,'?')), Y1 is Y+1, init_p(1,Y1).
   init_p(X,Y):-assert(piece(X,Y,'?')), X1 is X+1, init_p(X1,Y).
  
- % Prédicat play qui effectue un tour de jeu pour un joueur
+ % PrÃ©dicat play qui effectue un tour de jeu pour un joueur
  play(Player) :- write('New turn for:'), writeln(Player),
  		displayBoard. %in order to print it
  
- % Prédicat displayBoard (1,6) pour afficher
+ % PrÃ©dicat displayBoard (1,6) pour afficher
  displayBoard(7,1):-piece(7,1,C), write(C), writeln(' | '), writeln('__________________').
  displayBoard(1,Y):-piece(1,Y,C), writeln('__________________'), write(' | '),
      write(C), write(' | '), displayBoard(2,Y).
  displayBoard(7,Y):-piece(7,Y,C), write(C), writeln(' | '), Y1 is Y-1, displayBoard(1,Y1).
  displayBoard(X,Y):-piece(X,Y,C), write(C), write(' | '), X1 is X+1, displayBoard(X1,Y).
  
- % Prédicat isBoardFull (1) pour vérifier si la grille est pleine
+ % PrÃ©dicat isBoardFull (1) pour vÃ©rifier si la grille est pleine
 isBoardFull(7):-piece(7,6,C),!, C\=='?'.
 isBoardFull(X):-piece(X,6,C),!, C\=='?', X1 is X+1, isBoardFull(X1).
 % Tests : 	true : piece(1,6,'r'),piece(2,6,'r'),piece(3,6,'r'),piece(4,6,'r'),piece(5,6,'r'),piece(6,6,'r'),piece(7,6,'r').
 % 			false : piece(1,6,'?'),piece(2,6,'?'),piece(3,6,'?'),piece(4,6,'?'),piece(5,6,'?'),piece(6,6,'r'),piece(7,6,'?')
 % 					piece(1,6,'?'),piece(2,6,'r'),piece(3,6,'?'),piece(4,6,'?'),piece(5,6,'r'),piece(6,6,'r'),piece(7,6,'?')
 
-% Prédicat endGame(Winner si on est en conf gagnante ou 'Draw' si la grille est pleine)
-endGame(Winner):-checkStatus(X,Y,Winner).
+% PrÃ©dicat endGame(Winner si on est en conf gagnante ou 'Draw' si la grille est pleine)
+endGame(X,Y,Winner):-checkStatus(X,Y,Winner).
 endGame('Draw'):-isBoardFull.
 
- % Précicat qui ajoute un jeton à une position valide
+ % PrÃ©cicat qui ajoute un jeton Ã  une position valide
 @@ -56,4 +56,65 @@
     retract(piece(NC,N1,'?')),
     asserta(piece(NC,N1,Player)),
@@ -50,23 +50,23 @@ endGame('Draw'):-isBoardFull.
    CONDITIONS DE FIN DU JEU POUR SAVOIR SI UN JOUEUR A GAGNE/PERDU
    
    Les conditions de fin de jeu sont les suivantes :
-   - Alignement de quatre pièces de même couleur horizontalement
-   - Alignement de quatre pièces de même couleur verticalement
-   - Alignement de quatre pièces de même couleur dans la direction de la diagonale principale
-   - Alignement de quatre pièces de même couleur dans la direction de la diagonale secondaire
+   - Alignement de quatre piÃ¨ces de mÃªme couleur horizontalement
+   - Alignement de quatre piÃ¨ces de mÃªme couleur verticalement
+   - Alignement de quatre piÃ¨ces de mÃªme couleur dans la direction de la diagonale principale
+   - Alignement de quatre piÃ¨ces de mÃªme couleur dans la direction de la diagonale secondaire
    
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-% Précicat qui verifie un alignement gagnant à partir d'une pièce (X,Y) avec sa couleur
+% PrÃ©cicat qui verifie un alignement gagnant Ã  partir d'une piÃ¨ce (X,Y) avec sa couleur
 checkStatus(_,_,_).
 checkStatus(X,Y,Color):-
 	fourInARowCheck(X,Y),
-	(   Color == r -> write('Le joueur rouge a gagné !');
-	    Color == y -> write('Le joueur jaune a gagné !')
+	(   Color == r -> write('Le joueur rouge a gagnÃ© !');
+	    Color == y -> write('Le joueur jaune a gagnÃ© !')
 	).
-% Comptage du nombre de pièce de même couleur à la suite dans une direction donnée
-% - (X,Y) la position de la pièce dans le jeu
-% - (DirectX, DirectY) le vecteur directeur de la direction dans laquelle on vérifie l'alignement
-% - sumInARow le nombre de pièces de même couleur à la suite trouvées dans cette direction
+% Comptage du nombre de piÃ¨ce de mÃªme couleur Ã  la suite dans une direction donnÃ©e
+% - (X,Y) la position de la piÃ¨ce dans le jeu
+% - (DirectX, DirectY) le vecteur directeur de la direction dans laquelle on vÃ©rifie l'alignement
+% - sumInARow le nombre de piÃ¨ces de mÃªme couleur Ã  la suite trouvÃ©es dans cette direction
 numberInARow(_,_,_,_,1).
 numberInARow(X,Y,DirectX,DirectY,SumInARow):-
     NewX is X+DirectX,
