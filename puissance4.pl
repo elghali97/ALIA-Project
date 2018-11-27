@@ -5,9 +5,9 @@
 
 :-dynamic column/2.
 :-dynamic piece/3.
-
-init:-init_c(7),init_p(7,6).
-
+/*init du jeu*/
+init:-init_c(7),init_p(7,6). 
+/*init des colonnes a 0, init des pieces a ?*/
 init_c(0).
 init_c(N):-assert(column(N,0)),N1 is N-1,init_c(N1).
 
@@ -48,6 +48,7 @@ isBoardFull(X):-piece(X,6,C),!, C\=='?', X1 is X+1, isBoardFull(X1).
 endGame(Winner):-winner(Winner).
 endGame('Draw'):-isBoardFull.
 
+/*ajout d'un jeton*/
 add(NC,Player):-
     column(NC,N),
     N<7,
