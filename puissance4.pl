@@ -12,8 +12,8 @@ init_p(I,1):-assert(piece(I,1,'?')),I1 is I-1,init_p(I1,6),!.
 init_p(I,J):-assert(piece(I,J,'?')),J1 is J-1,init_p(I,J1),!.
 
 play(Player) :-
-        move(Player),
-    	not(endGame(Player)),
+        move(Player,X),
+    	not(endGame(Player,X)),
     	changePlayer(Player,Player1),
         play(Player1).
 
@@ -41,11 +41,11 @@ assert(column(NC,N1)).
 isBoardFull(7):-column(7,C), C==7,writeln('Egalite').
 isBoardFull(X):-column(X,C), C==7, X1 is X+1, isBoardFull(X1).
 
-endGame(Player):-checkStatus(Player),displayBoard(1,6),!,abort.
-endGame(_):-isBoardFull(1),displayBoard(1,6),!,abort.
+endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),!,abort.
+endGame(_,_):-isBoardFull(1),displayBoard(1,6),!,abort.
 
 /* predicat permettant a un utilisateur de jouer*/
-move(Player):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,Player).
+move(Player,X):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,Player).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    CONDITIONS DE FIN DU JEU POUR SAVOIR SI UN JOUEUR A GAGNE/PERDU
@@ -58,8 +58,6 @@ move(Player):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,Player).
    
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /*Verification d'un alignement gagnant à partir d'une pièce (X,Y) avec sa couleur*/
-
-checkStatus(Player):-piece(X,Y,Player),!,checkStatus(X,Y,Player).
 checkStatus(X,Y,Player):-
 	fourCheck(X,Y,Player),
 	(   Player == r -> writeln('Le joueur rouge a gagné !');
