@@ -69,99 +69,208 @@ checkStatus(X,Y,Player):-
  - (DirectX, DirectY) le vecteur directeur de la direction dans laquelle on vérifie l'alignement
  - sumInARow le nombre de pièces de même couleur à la suite trouvées dans cette direction
 */
-fourCheck(X,Y,Player):-fourInARowCheckR(X,Y,Player,1),!.
-fourCheck(X,Y,Player):-fourInARowCheckL(X,Y,Player,1),!.
-fourCheck(X,Y,Player):-fourInAColumnCheckU(X,Y,Player,1),!.
-fourCheck(X,Y,Player):-fourInAColumnCheckD(X,Y,Player,1),!.
-fourCheck(X,Y,Player):-fourInADiagCheckNE(X,Y,Player,1),!.
-fourCheck(X,Y,Player):-fourInADiagCheckNW(X,Y,Player,1),!.
-fourCheck(X,Y,Player):-fourInADiagCheckSE(X,Y,Player,1),!.
-fourCheck(X,Y,Player):-fourInADiagCheckSW(X,Y,Player,1),!.
+fourCheck(X,Y,Player):-fourInARowCheck(X,Y,Player),!.
+fourCheck(X,Y,Player):-fourInColumnCheck(X,Y,Player),!.
+fourCheck(X,Y,Player):-fourInDiagPrincCheck(X,Y,Player),!.
+fourCheck(X,Y,Player):-fourInDiagSecondCheck(X,Y,Player),!.
+
+
+
+/*Verification d'un alignement horizontal*/
+fourInARowCheck(X,Y,Player):-
+    fourInARowCheckL(X,Y,Player,Sum1,4),
+    fourInARowCheckR(X,Y,Player,Sum2,4),
+    Sum is Sum1 + Sum2 + 1,
+    Sum >= 4.
 
 /*Verification d'un alignement horizontal droite*/
-fourInARowCheckR(_,_,_,4).
-fourInARowCheckR(X,Y,Player,Sum):-
+fourInARowCheckR(_,_,_,_,0).
+fourInARowCheckR(X,Y,Player,Sum,_):-
+    X1 is X+1,
+    not(piece(X1,Y,Player)),
+    Sum is 0.
+fourInARowCheckR(X,Y,Player,Sum,CountDown):-
     X1 is X+1,
     piece(X1,Y,Player),
-    Sum1 is Sum+1,
-    fourInARowCheckR(X1,Y,Player,Sum1).
-/*test: init,add(1,'r'),add(2,'y'),add(3,'y'),add(4,'y'),add(5,'y'),checkStatus(5,1,'y').*/    
+    CountDown1 is CountDown - 1,
+    fourInARowCheckR(X1,Y,Player,Sum1,CountDown1),
+    Sum is Sum1+1.
+
+/*test: init,add(1,'r'),add(2,'y'),add(3,'y'),add(4,'y'),add(5,'y'),fourInARowCheckR(2,1,'y',Sum,4).
+  SUM =3*/    
 
  /*Verification d'un alignement horizontal gauche*/
-fourInARowCheckL(_,_,_,4).
-fourInARowCheckL(X,Y,Player,Sum):-
+fourInARowCheckL(_,_,_,_,0).
+fourInARowCheckL(X,Y,Player,Sum,_):-
+    X1 is X-1,
+    not(piece(X1,Y,Player)),
+    Sum is 0.
+fourInARowCheckL(X,Y,Player,Sum,CountDown):-
     X1 is X-1,
     piece(X1,Y,Player),
-    Sum1 is Sum+1,
-    fourInARowCheckL(X1,Y,Player,Sum1).
-/*test: init,add(1,'r'),add(2,'y'),add(3,'y'),add(4,'y'),add(5,'y'),checkStatus(2,1,'y').*/
+    CountDown1 is CountDown-1,
+    fourInARowCheckL(X1,Y,Player,Sum1,CountDown1),
+    Sum is Sum1+1.
+
+
+/*test: init,add(1,'r'),add(2,'y'),add(3,'y'),add(4,'y'),add(5,'y'),fourInARowCheckL(4,1,'y',Sum,4).
+ SUM =2*/ 
+
+
+
+/*Verification d'un alignement vertical*/
+fourInColumnCheck(X,Y,Player):-
+    fourInAColumnCheckD(X,Y,Player,Sum1,4),
+    fourInAColumnCheckU(X,Y,Player,Sum2,4),
+    Sum is Sum1 + Sum2 + 1,
+    Sum >= 4.
 
 /*Verification d'un alignement vertical haut*/
-fourInAColumnCheckU(_,_,_,4).
-fourInAColumnCheckU(X,Y,Player,Sum):-
+fourInAColumnCheckU(_,_,_,_,0).
+fourInAColumnCheckU(X,Y,Player,Sum,_):-
+    Y1 is Y+1,
+    not(piece(X,Y1,Player)),
+    Sum is 0.
+fourInAColumnCheckU(X,Y,Player,Sum,CountDown):-
     Y1 is Y+1,
     piece(X,Y1,Player),
-    Sum1 is Sum+1,
-    fourInAColumnCheckU(X,Y1,Player,Sum1).
-/*test: init,add(1,'r'),add(1,'y'),add(1,'y'),add(1,'y'),add(1,'y'),checkStatus(1,2,'y').*/
+    CountDown1 is CountDown-1,
+    fourInAColumnCheckU(X,Y1,Player,Sum1,CountDown1),
+    Sum is Sum1+1.
+
+/*test: init,add(1,'r'),add(1,'y'),add(1,'y'),add(1,'y'),add(1,'y'),fourInAColumnCheckU(1,3,'y',Sum,4).
+ Sum = 2*/
 
 /*Verification d'un alignement vertical bas*/
-fourInAColumnCheckD(_,_,_,4).
-fourInAColumnCheckD(X,Y,Player,Sum):-
+fourInAColumnCheckD(_,_,_,_,0).
+fourInAColumnCheckD(X,Y,Player,Sum,_):-
+    Y1 is Y-1,
+    not(piece(X,Y1,Player)),
+    Sum is 0.
+fourInAColumnCheckD(X,Y,Player,Sum,CountDown):-
     Y1 is Y-1,
     piece(X,Y1,Player),
-    Sum1 is Sum+1,
-    fourInAColumnCheckD(X,Y1,Player,Sum1).
-/*test: init,add(1,'r'),add(1,'y'),add(1,'y'),add(1,'y'),add(1,'y'),checkStatus(1,5,'y').*/
+    CountDown1 is CountDown-1,
+    fourInAColumnCheckD(X,Y1,Player,Sum1,CountDown1),
+    Sum is Sum1+1.
+
+/*test: init,add(1,'r'),add(1,'y'),add(1,'y'),add(1,'y'),add(1,'y'),fourInAColumnCheckD(1,4,'y',Sum,4).
+Sum = 2*/
+
+/*Verification d'un alignement dans la direction de la diagonale principale(nord est et sud ouest)*/
+fourInDiagPrincCheck(X,Y,Player):-
+    fourInADiagCheckNE(X,Y,Player,Sum1,4),
+    fourInADiagCheckSW(X,Y,Player,Sum2,4),
+    Sum is Sum1 + Sum2 + 1,
+    Sum >= 4.
+
 
 /*Verification d'un alignement dans la direction de la diagonale nord est*/
-fourInADiagCheckNE(_,_,_,4).
-fourInADiagCheckNE(X,Y,Player,Sum):-
+fourInADiagCheckNE(_,_,_,_,0).
+fourInADiagCheckNE(X,Y,Player,Sum,_):-
+    Y1 is Y+1,
+    X1 is X+1,
+    not(piece(X1,Y1,Player)),
+    Sum is 0.
+fourInADiagCheckNE(X,Y,Player,Sum,CountDown):-
     Y1 is Y+1,
     X1 is X+1,
     piece(X1,Y1,Player),
-    Sum1 is Sum+1,
-    fourInADiagCheckNE(X1,Y1,Player,Sum1).
-/*test: init,add(1,'r'),add(2,'y'),add(2,'r'),add(3,'y'),add(3,'y'),add(3,'r'),add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),checkStatus(1,1,'y').*/
+    CountDown1 is CountDown-1,
+    fourInADiagCheckNE(X1,Y1,Player,Sum1,CountDown1),
+    Sum is Sum1+1.
 
-/*Verification d'un alignement dans la direction de la diagonale sud est*/
-
-fourInADiagCheckSE(_,_,_,4).
-fourInADiagCheckSE(X,Y,Player,Sum):-
-    Y1 is Y-1,
-    X1 is X+1,
-    piece(X1,Y1,Player),
-    Sum1 is Sum+1,
-    fourInADiagCheckSE(X1,Y1,Player,Sum1).
-/*test: init,add(7,'r'),add(6,'y'),add(6,'r'),add(5,'y'),add(5,'y'),add(5,'r'),add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),checkStatus(4,4,'y').*/
-
-/*Verification d'un alignement dans la direction de la diagonale nord west*/
-
-fourInADiagCheckNW(_,_,_,4).
-fourInADiagCheckNW(X,Y,Player,Sum):-
-    Y1 is Y+1,
-    X1 is X-1,
-    piece(X1,Y1,Player),
-    Sum1 is Sum+1,
-    fourInADiagCheckNW(X1,Y1,Player,Sum1).
-/*test: init,add(7,'r'),add(6,'y'),add(6,'r'),add(5,'y'),add(5,'y'),add(5,'r'),add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),checkStatus(7,1,'y').*/
+/*test: init,add(1,'r'),add(2,'y'),add(2,'r'),add(3,'y'),add(3,'y'),add(3,'r'),
+ add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),fourInADiagCheckNE(1,1,'r',Sum,4).
+ Sum = 3
+ test: init,add(1,'r'),add(2,'y'),add(2,'r'),add(3,'y'),add(3,'y'),add(3,'r'),
+ add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),fourInADiagCheckNE(2,2,'r',Sum,4).
+ Sum = 2
+*/
 
 /*Verification d'un alignement dans la direction de la diagonale sud west*/
-
-fourInADiagCheckSW(_,_,_,4).
-fourInADiagCheckSW(X,Y,Player,Sum):-
+fourInADiagCheckSW(_,_,_,_,0).
+fourInADiagCheckSW(X,Y,Player,Sum,_):-
+    Y1 is Y-1,
+    X1 is X-1,
+    not(piece(X1,Y1,Player)),
+    Sum is 0.
+fourInADiagCheckSW(X,Y,Player,Sum,CountDown):-
     Y1 is Y-1,
     X1 is X-1,
     piece(X1,Y1,Player),
-    Sum1 is Sum+1,
-    fourInADiagCheckSW(X1,Y1,Player,Sum1).
-/*test: init,add(1,'r'),add(2,'y'),add(2,'r'),add(3,'y'),add(3,'y'),add(3,'r'),add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),checkStatus(4,4,'y').*/
+    CountDown1 is CountDown-1,
+    fourInADiagCheckSW(X1,Y1,Player,Sum1,CountDown1),
+    Sum is Sum1+1.
+
+/*test: init,add(1,'r'),add(2,'y'),add(2,'r'),add(3,'y'),add(3,'y'),
+ add(3,'r'),add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),
+ fourInADiagCheckSW(3,3,'r',Sum,4).
+ Sum = 2
+ 
+ test: init,add(1,'r'),add(2,'y'),add(2,'r'),add(3,'y'),add(3,'y'),
+ add(3,'r'),add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),
+ fourInADiagCheckSW(4,4,'r',Sum,4).
+ Sum = 3
+ */
+
+/*Verification d'un alignement dans la direction de la diagonale secondaire(sud est et nord ouest)*/
+fourInDiagSecondCheck(X,Y,Player):-
+    fourInADiagCheckSE(X,Y,Player,Sum1,4),
+    fourInADiagCheckNW(X,Y,Player,Sum2,4),
+    Sum is Sum1 + Sum2 + 1,
+    Sum >= 4.
+
+/*Verification d'un alignement dans la direction de la diagonale sud est*/
+fourInADiagCheckSE(_,_,_,_,0).
+fourInADiagCheckSE(X,Y,Player,Sum,_):-
+    Y1 is Y-1,
+    X1 is X+1,
+    not(piece(X1,Y1,Player)),
+    Sum is 0.
+fourInADiagCheckSE(X,Y,Player,Sum,CountDown):-
+    Y1 is Y-1,
+    X1 is X+1,
+    piece(X1,Y1,Player),
+    CountDown1 is CountDown+1,
+    fourInADiagCheckSE(X1,Y1,Player,Sum1,CountDown1),
+    Sum is Sum1+1.
+/*test: init,add(7,'r'),add(6,'y'),add(6,'r'),add(5,'y'),add(5,'y'),add(5,'r'),
+ add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),fourInADiagCheckSE(4,4,'r',Sum,4).
+ Sum = 3.
+ 
+ init,add(7,'r'),add(6,'y'),add(6,'r'),add(5,'y'),add(5,'y'),add(5,'r'),
+ add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),
+fourInADiagCheckSE(5,3,'r',Sum,4).
+ Sum = 2.
+ */
+
+/*Verification d'un alignement dans la direction de la diagonale nord west*/
+fourInADiagCheckNW(_,_,_,_,0).
+fourInADiagCheckNW(X,Y,Player,Sum,_):-
+    Y1 is Y+1,
+    X1 is X-1,
+    not(piece(X1,Y1,Player)),
+    Sum is 0.
+fourInADiagCheckNW(X,Y,Player,Sum,CountDown):-
+    Y1 is Y+1,
+    X1 is X-1,
+    piece(X1,Y1,Player),
+    CountDown1 is CountDown-1,
+    fourInADiagCheckNW(X1,Y1,Player,Sum1,CountDown1),
+    Sum is Sum1+1.
+/*test: init,add(7,'r'),add(6,'y'),add(6,'r'),add(5,'y'),add(5,'y'),add(5,'r'),
+ add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),fourInADiagCheckNW(7,1,'r',Sum,4).
+ SUM = 3
+ 
+ init,add(7,'r'),add(6,'y'),add(6,'r'),add(5,'y'),add(5,'y'),add(5,'r'),
+ add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),fourInADiagCheckNW(7,1,'r',Sum,4).
+ SUM = 2
+ */
 
 
 
 /*Implementation min-max with alpha beta prunning*/
-
-
 dispoMoves(0,[]).
 dispoMoves(N,[N|Moves]):-column(N,Size),Size<7,N1 is N-1,dispoMoves(N1,Moves),!.
 dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
