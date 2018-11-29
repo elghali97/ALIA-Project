@@ -41,7 +41,7 @@ assert(column(NC,N1)).
 isBoardFull(7):-column(7,C), C==7,writeln('Egalite').
 isBoardFull(X):-column(X,C), C==7, X1 is X+1, isBoardFull(X1).
 
-endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),!,abort.
+endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),!,writeln(X),writeln(N),abort.
 endGame(_,_):-isBoardFull(1),displayBoard(1,6),!,abort.
 
 /* predicat permettant a un utilisateur de jouer*/
@@ -60,8 +60,8 @@ move(Player,X):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,Player).
 /*Verification d'un alignement gagnant à partir d'une pièce (X,Y) avec sa couleur*/
 checkStatus(X,Y,Player):-
 	fourCheck(X,Y,Player),
-	(   Player == r -> writeln('Le joueur rouge a gagné !');
-	    Player == y -> writeln('Le joueur jaune a gagné !')
+	(   Player == 'r' -> writeln('Le joueur rouge a gagné !');
+	    Player == 'y' -> writeln('Le joueur jaune a gagné !')
 	).
 
 /* Comptage du nombre de pièce de même couleur à la suite dans une direction donnée
@@ -156,3 +156,47 @@ fourInADiagCheckSW(X,Y,Player,Sum):-
     Sum1 is Sum+1,
     fourInADiagCheckSW(X1,Y1,Player,Sum1).
 /*test: init,add(1,'r'),add(2,'y'),add(2,'r'),add(3,'y'),add(3,'y'),add(3,'r'),add(4,'y'),add(4,'y'),add(4,'y'),add(4,'r'),checkStatus(4,4,'y').*/
+
+
+
+/*Implementation min-max with alpha beta prunning*/
+
+
+dispoMoves(0,[]).
+dispoMoves(N,[N|Moves]):-column(N,Size),Size<7,N1 is N-1,dispoMoves(N1,Moves),!.
+dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
+/**test: init,retract(column(5,0)),assert(column(5,7)),dispoMoves(7,Y).*/
+
+evaluate_and_choose([],D,Alpha,Beta,Move,[Move,Alpha]).
+
+evaluate_and_choose(Move|Moves,D,Alpha,Beta,Move1,BestMove):-
+    alpha_beta(D,Move,Alpha,Beta,MoveX,Value),
+    Value1 is -Value,
+    cutoff(Move,Value1,D,Alpha,Beta,Moves,Move1,BestMove).
+
+alpha_beta(0,Alpha,Beta,Move,Value):-
+    value(Value).
+
+alpha_beta(D,Alpha,Beta,Move,Value):-
+    column(Move,N),
+    assert(piece(Move,N)),
+    dispoMoves(7,Moves),
+    retract(piece(Move,N)),
+    Alpha1 is -Beta,
+    Beta1 is -Alpha,
+    D1 is D - 1,
+    evaluate_and_choose(Moves,D1,Alpha1,Beta1,nil,[Move,Value]).
+
+cutoff(Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
+    Value >= Beta.
+
+cutoff(Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
+    Alpha < Value,Value < Beta,
+    evaluate_and_choose(Moves,D,Value,Beta,Move,BestMove).
+
+cutoff(Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
+    Alpha =< Value,
+    evaluate_and_choose(Moves,D,Alpha,Beta,Move1,BestMove).
+
+/*Heuristique*/
+value(Value).
