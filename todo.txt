@@ -1,0 +1,4 @@
+faire un mode joueur ?
+heuristiques
+fonction canWin
+nb multiples de parties pour statistiques
