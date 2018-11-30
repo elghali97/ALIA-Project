@@ -84,7 +84,6 @@ fourInARowCheck(X,Y,Player):-
     Sum >= 4.
 
 /*Verification d'un alignement horizontal droite*/
-fourInARowCheckR(_,_,_,_,0).
 fourInARowCheckR(X,Y,Player,Sum,_):-
     X1 is X+1,
     not(piece(X1,Y,Player)),
@@ -100,7 +99,6 @@ fourInARowCheckR(X,Y,Player,Sum,CountDown):-
   SUM =3*/    
 
  /*Verification d'un alignement horizontal gauche*/
-fourInARowCheckL(_,_,_,_,0).
 fourInARowCheckL(X,Y,Player,Sum,_):-
     X1 is X-1,
     not(piece(X1,Y,Player)),
@@ -126,7 +124,6 @@ fourInColumnCheck(X,Y,Player):-
     Sum >= 4.
 
 /*Verification d'un alignement vertical haut*/
-fourInAColumnCheckU(_,_,_,_,0).
 fourInAColumnCheckU(X,Y,Player,Sum,_):-
     Y1 is Y+1,
     not(piece(X,Y1,Player)),
@@ -142,7 +139,6 @@ fourInAColumnCheckU(X,Y,Player,Sum,CountDown):-
  Sum = 2*/
 
 /*Verification d'un alignement vertical bas*/
-fourInAColumnCheckD(_,_,_,_,0).
 fourInAColumnCheckD(X,Y,Player,Sum,_):-
     Y1 is Y-1,
     not(piece(X,Y1,Player)),
@@ -166,7 +162,6 @@ fourInDiagPrincCheck(X,Y,Player):-
 
 
 /*Verification d'un alignement dans la direction de la diagonale nord est*/
-fourInADiagCheckNE(_,_,_,_,0).
 fourInADiagCheckNE(X,Y,Player,Sum,_):-
     Y1 is Y+1,
     X1 is X+1,
@@ -189,7 +184,6 @@ fourInADiagCheckNE(X,Y,Player,Sum,CountDown):-
 */
 
 /*Verification d'un alignement dans la direction de la diagonale sud west*/
-fourInADiagCheckSW(_,_,_,_,0).
 fourInADiagCheckSW(X,Y,Player,Sum,_):-
     Y1 is Y-1,
     X1 is X-1,
@@ -222,7 +216,6 @@ fourInDiagSecondCheck(X,Y,Player):-
     Sum >= 4.
 
 /*Verification d'un alignement dans la direction de la diagonale sud est*/
-fourInADiagCheckSE(_,_,_,_,0).
 fourInADiagCheckSE(X,Y,Player,Sum,_):-
     Y1 is Y-1,
     X1 is X+1,
@@ -246,7 +239,6 @@ fourInADiagCheckSE(5,3,'r',Sum,4).
  */
 
 /*Verification d'un alignement dans la direction de la diagonale nord west*/
-fourInADiagCheckNW(_,_,_,_,0).
 fourInADiagCheckNW(X,Y,Player,Sum,_):-
     Y1 is Y+1,
     X1 is X-1,
