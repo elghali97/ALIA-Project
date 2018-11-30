@@ -2,3 +2,4 @@ faire un mode joueur ?
 heuristiques
 fonction canWin
 nb multiples de parties pour statistiques
+analyser stat lorsque le premier joueur joue sur la colonne centrale vs quand il joue sur autre colonne pour premier coup/de manière général (par exemple si deux coup avec meme évaluation, privilégier la colonne centrale)
