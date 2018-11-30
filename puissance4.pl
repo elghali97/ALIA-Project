@@ -1,7 +1,7 @@
 :-dynamic column/2.
 :-dynamic piece/3.
 /*init du jeu*/
-init:-init_c(7),init_p(7,6),play('r'). 
+init:-init_c(7),init_p(7,6).%,play('r'). 
 /*init des colonnes à 0*/
 init_c(0):-!.
 init_c(N):-assert(column(N,0)),N1 is N-1,init_c(N1),!.
@@ -34,8 +34,19 @@ add(NC,Player):-
     retract(piece(NC,N1,'?')),
     asserta(piece(NC,N1,Player)),
     retract(column(NC,N)),
-assert(column(NC,N1)).
+	assert(column(NC,N1)).
 
+/*remove un jeton dans une position valide*/
+remove(NC):-
+    column(NC,N),
+    N<7,
+    N1 is N-1,
+    retract(piece(NC,N,_)),
+    asserta(piece(NC,N,'?')),
+    retract(column(NC,N)),
+	assert(column(NC,N1)).
+% Tests : 	init,add(4,'r'),displayBoard(1,6),writeln(""),remove(4),displayBoard(1,6)
+% 			init,add(4,'r'),displayBoard(1,6),writeln(""),remove(X),displayBoard(1,6)
 
 /* Prédicat isBoardFull (1) pour vérifier si la grille est pleine */
 isBoardFull(7):-column(7,C), C==7,writeln('Egalite').
@@ -260,7 +271,18 @@ fourInADiagCheckNW(X,Y,Player,Sum,CountDown):-
  SUM = 2
  */
 
+% Prédicat canWinColumn qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWinColumn(Player, column) )
+canWinColumn(Player,X):-X>0,X<8,add(X,Player),column(X,N),fourCheck(X,N,Player),remove(X).
 
+% Prédicat canWin qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWin(Player,X) qui renvoie X la colonne où jouer pour gagner)
+canWin(Player, X):-
+    canWinColumn(Player,1), X is 1;
+    canWinColumn(Player,2), X is 2;
+    canWinColumn(Player,3), X is 3;
+    canWinColumn(Player,4), X is 4;
+    canWinColumn(Player,5), X is 5;
+    canWinColumn(Player,6), X is 6;
+    canWinColumn(Player,7), X is 7.
 
 /*Implementation min-max with alpha beta prunning*/
 dispoMoves(0,[]).
