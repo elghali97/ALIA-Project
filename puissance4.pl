@@ -273,6 +273,7 @@ fourInADiagCheckNW(X,Y,Player,Sum,CountDown):-
 
 % Prédicat canWinColumn qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWinColumn(Player, column) )
 canWinColumn(Player,X):-X>0,X<8,add(X,Player),column(X,N),fourCheck(X,N,Player),remove(X).
+canWinColumn(_,X):-remove(X),fail.
 
 % Prédicat canWin qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWin(Player,X) qui renvoie X la colonne où jouer pour gagner)
 canWin(Player, X):-
@@ -290,36 +291,39 @@ dispoMoves(N,[N|Moves]):-column(N,Size),Size<7,N1 is N-1,dispoMoves(N1,Moves),!.
 dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
 /**test: init,retract(column(5,0)),assert(column(5,7)),dispoMoves(7,Y).*/
 
-evaluate_and_choose([],D,Alpha,Beta,Move,[Move,Alpha]).
+evaluate_and_choose(Player,[],D,Alpha,Beta,Move,[Move,Alpha]).
 
-evaluate_and_choose(Move|Moves,D,Alpha,Beta,Move1,BestMove):-
-    alpha_beta(D,Move,Alpha,Beta,MoveX,Value),
+evaluate_and_choose(Player,[Move|Moves],D,Alpha,Beta,Move1,BestMove):-
+    alpha_beta(Player,D,Move,Alpha,Beta,MoveX,Value),
     Value1 is -Value,
-    cutoff(Move,Value1,D,Alpha,Beta,Moves,Move1,BestMove).
+    cutoff(Player,Move,Value1,D,Alpha,Beta,Moves,Move1,BestMove).
 
-alpha_beta(0,Alpha,Beta,Move,Value):-
-    value(Value).
+alpha_beta(Player,0,Alpha,Beta,Move,Value):-
+    value(Player,Value).
 
-alpha_beta(D,Alpha,Beta,Move,Value):-
-    column(Move,N),
-    assert(piece(Move,N)),
+alpha_beta(Player,D,Alpha,Beta,Move,Value):-
+    add(Move,Player),
     dispoMoves(7,Moves),
-    retract(piece(Move,N)),
     Alpha1 is -Beta,
     Beta1 is -Alpha,
     D1 is D - 1,
-    evaluate_and_choose(Moves,D1,Alpha1,Beta1,nil,[Move,Value]).
+    changePlayer(Player,NextPlayer);
+    evaluate_and_choose(NextPlayer,Moves,D1,Alpha1,Beta1,nil,[Move,Value]),
+    remove(Move,Player).
 
-cutoff(Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
+cutoff(Player,Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
     Value >= Beta.
 
-cutoff(Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
+cutoff(Player,Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
     Alpha < Value,Value < Beta,
-    evaluate_and_choose(Moves,D,Value,Beta,Move,BestMove).
+    evaluate_and_choose(Player,Moves,D,Value,Beta,Move,BestMove).
 
-cutoff(Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
+cutoff(Player,Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
     Alpha =< Value,
-    evaluate_and_choose(Moves,D,Alpha,Beta,Move1,BestMove).
+    evaluate_and_choose(Player,Moves,D,Alpha,Beta,Move1,BestMove).
 
 /*Heuristique*/
-value(Value).
+value(Player,Value):-canWin(Player,X),Value is 1000,!.
+value(Player,Value):-changePlayer(Player,NextPlayer),canWin(NextPlayer,X),Value is 0,!.
+value(Player,Value):-Value is 500.
+
