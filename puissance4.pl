@@ -12,7 +12,7 @@ init_p(I,1):-assert(piece(I,1,'?')),I1 is I-1,init_p(I1,6),!.
 init_p(I,J):-assert(piece(I,J,'?')),J1 is J-1,init_p(I,J1),!.
 
 play(Player) :-
-        move(Player,X),
+        move(Player,X),!,
     	not(endGame(Player,X)),
     	changePlayer(Player,Player1),
         play(Player1).
@@ -41,8 +41,8 @@ assert(column(NC,N1)).
 isBoardFull(7):-column(7,C), C==7,writeln('Egalite').
 isBoardFull(X):-column(X,C), C==7, X1 is X+1, isBoardFull(X1).
 
-endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),!,writeln(X),writeln(N),abort.
-endGame(_,_):-isBoardFull(1),displayBoard(1,6),!,abort.
+endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),writeln(X),writeln(N),!.
+endGame(_,_):-isBoardFull(1),displayBoard(1,6),!.
 
 /* predicat permettant a un utilisateur de jouer*/
 move(Player,X):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,Player).
