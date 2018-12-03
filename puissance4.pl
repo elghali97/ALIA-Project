@@ -15,13 +15,15 @@ init_p(I,J):-assert(piece(I,J,'?')),J1 is J-1,init_p(I,J1),!.
 play(_,0,Vic,Defeat,_):-Vic is 0,Defeat is 0.
 play(Player,N,Vic,Defeat,_) :-
         move(Player,X),
+    	/*displayBoard(1,6),
+    	writeln('***********'),*/
     	not(endGame(Player,X)),
     	changePlayer(Player,Player1),
         play(Player1,N,Vic,Defeat,X).
 play(Player,N,Vic,Defeat,Final) :-
     	N1 is N-1,
-    	retractall(column(X,N)),
-    	retractall(piece(X,Y,C)),
+    	retractall(column(_,_)),
+    	retractall(piece(_,_,_)),
     	init_c(7),
     	init_p(7,6),
 		play(Player,N1,Vic1,Defeat1,Final),
@@ -44,20 +46,20 @@ add(NC,Player):-
     column(NC,N),
     N<7,
     N1 is N+1,
-    retract(piece(NC,N1,'?')),
-    asserta(piece(NC,N1,Player)),
     retract(column(NC,N)),
-	assert(column(NC,N1)).
-
+	assert(column(NC,N1)),
+    retract(piece(NC,N1,_)),
+    asserta(piece(NC,N1,Player)).
+    
 /*remove un jeton dans une position valide*/
 remove(NC):-
     column(NC,N),
-    N<7,
+    N>0,
     N1 is N-1,
-    retract(piece(NC,N,_)),
-    asserta(piece(NC,N,'?')),
     retract(column(NC,N)),
-	assert(column(NC,N1)).
+	assert(column(NC,N1)),
+    retract(piece(NC,N,_)),
+    asserta(piece(NC,N,'?')).
 % Tests : 	init,add(4,'r'),displayBoard(1,6),writeln(""),remove(4),displayBoard(1,6)
 % 			init,add(4,'r'),displayBoard(1,6),writeln(""),remove(X),displayBoard(1,6)
 
@@ -69,7 +71,9 @@ endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),writeln
 endGame(_,_):-isBoardFull(1),displayBoard(1,6),!.
 
 /* predicat permettant a un utilisateur de jouer*/
-move(Player,X):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,Player),!.
+move('r',X):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
+
+move('y',Move):-alpha_beta(4,[], 'r', 'y', negativeInf, positiveInf, Move, Value),add(Move,'y'),!.
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    CONDITIONS DE FIN DU JEU POUR SAVOIR SI UN JOUEUR A GAGNE/PERDU
@@ -83,8 +87,8 @@ move(Player,X):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,Player),!.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /*Verification d'un alignement gagnant à partir d'une pièce (X,Y) avec sa couleur*/
 checkStatus(X,Y,Player):-
-	fourCheck(X,Y,Player),
-	(   Player == 'r' -> writeln('Le joueur rouge a gagné !');
+	fourCheck(X,Y,Player),	
+    (   Player == 'r' -> writeln('Le joueur rouge a gagné !');
 	    Player == 'y' -> writeln('Le joueur jaune a gagné !')
 	).
 
@@ -277,7 +281,7 @@ fourInADiagCheckNW(X,Y,Player,Sum):-
  */
 
 % Prédicat canWinColumn qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWinColumn(Player, column) )
-canWinColumn(Player,X):-X>0,X<8,add(X,Player),column(X,N),fourCheck(X,N,Player),remove(X).
+canWinColumn(Player,X):-X>0,X<8,add(X,Player),column(X,N),fourCheck(X,N,Player),remove(X),!.
 canWinColumn(_,X):-remove(X),fail.
 
 % Prédicat canWin qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWin(Player,X) qui renvoie X la colonne où jouer pour gagner)
@@ -294,41 +298,98 @@ canWin(Player, X):-
 dispoMoves(0,[]).
 dispoMoves(N,[N|Moves]):-column(N,Size),Size<7,N1 is N-1,dispoMoves(N1,Moves),!.
 dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
+
 /**test: init,retract(column(5,0)),assert(column(5,7)),dispoMoves(7,Y).*/
 
-evaluate_and_choose(Player,[],D,Alpha,Beta,Move,[Move,Alpha]).
+%%%%%%%%% Alpha-Beta optim :
+%%----------------------------
+inferior(X, negativeInf) :- !, fail.
+inferior(X,positiveInf) :- !.
+inferior(X,Y) :- X < Y.
 
-evaluate_and_choose(Player,[Move|Moves],D,Alpha,Beta,Move1,BestMove):-
-    alpha_beta(Player,D,Move,Alpha,Beta,MoveX,Value),
-    Value1 is -Value,
-    cutoff(Player,Move,Value1,D,Alpha,Beta,Moves,Move1,BestMove).
+superior(X, positiveInf) :- !, fail.
+superior(X,negativeInf) :- !.
+superior(X,Y) :- X > Y.
 
-alpha_beta(Player,0,Alpha,Beta,Move,Value):-
-    value(Player,Value).
+inverse(positiveInf, negativeInf) :- !.
+inverse(negativeInf, positiveInf) :- !.
+inverse(X, Y) :- Y is -1 * X.
 
-alpha_beta(Player,D,Alpha,Beta,Move,Value):-
-    add(Move,Player),
-    dispoMoves(7,Moves),
-    Alpha1 is -Beta,
-    Beta1 is -Alpha,
-    D1 is D - 1,
-    changePlayer(Player,NextPlayer);
-    evaluate_and_choose(NextPlayer,Moves,D1,Alpha1,Beta1,nil,[Move,Value]),
-    remove(Move,Player).
 
-cutoff(Player,Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
-    Value >= Beta.
+%%----------------------------
 
-cutoff(Player,Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
-    Alpha < Value,Value < Beta,
-    evaluate_and_choose(Player,Moves,D,Value,Beta,Move,BestMove).
+alpha_beta(D, Board,CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
+    (canWin('r',_);canWin('y',_)),
+	value(CurrentPlayer, V1),
+	changePlayer(CurrentPlayer, NewPlayer),
+	value(NewPlayer, V2),
+	(CurrentPlayer == MainPlayer, !, Value is V1 - V2; Value is V2 - V1).
 
-cutoff(Player,Move,Value,D,Alpha,Beta,Moves,Move1,(Move,Value)):-
-    Alpha =< Value,
-    evaluate_and_choose(Player,Moves,D,Alpha,Beta,Move1,BestMove).
+alpha_beta(0, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
+	value(CurrentPlayer, V1),
+	changePlayer(CurrentPlayer, NewPlayer),
+	value(NewPlayer, V2),
+	(CurrentPlayer == MainPlayer, !, Value is V1 - V2; Value is V2 - V1).
+
+alpha_beta(D, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
+	D > 0,
+	dispoMoves(7, Moves),
+	inverse(Beta, Alpha1),
+	inverse(Alpha, Beta1),
+	D1 is D - 1,
+	changePlayer(CurrentPlayer, NewPlayer),
+	evaluate_and_choose_Alpha_Beta(Moves, Board, NewPlayer, MainPlayer, D1, Alpha1, Beta1, nil, (Move, Value)).
+	
+evaluate_and_choose_Alpha_Beta([Move|Moves],Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove) :-
+	add2(Board,Move,NewBoard,CurrentPlayer),
+	(
+		(canWin(CurrentPlayer,X),!;isBoardFull(1)),!, 
+		alpha_beta(0, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value);
+		alpha_beta(D, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value)
+	),
+    remove2(NewBoard,Board),
+	inverse(Value, Value1),
+	cutoff(CurrentPlayer, MainPlayer, Move, Value1, D ,Alpha, Beta, Moves,Board, Move1, BestMove).
+	
+evaluate_and_choose_Alpha_Beta([], Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move, (Move, Alpha)).
+
+cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, (Move, Value)) :-
+	superior(Value, Beta), !; Value == Beta.
+
+cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, BestMove) :-
+	superior(Value, Alpha), inferior(Value, Beta), !,
+	evaluate_and_choose_Alpha_Beta(Moves, Board, CurrentPlayer, MainPlayer, D, Value, Beta, Move, BestMove).
+
+cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves, Board, Move1, BestMove) :-
+	(inferior(Value, Alpha), !; Value == Alpha),
+	evaluate_and_choose_Alpha_Beta(Moves,Board,CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove).
+
+/*ajout d'un jeton dans une position valide*/
+add2(Board,NC,[[NC,N1,Player]|Board],Player):-
+    column(NC,N),
+    N<7,
+    N1 is N+1,
+    piece(NC,N1,'?'),
+    retract(piece(NC,N1,'?')),
+    retract(column(NC,N)),
+	assert(column(NC,N1)),
+    asserta(piece(NC,N1,Player)),!.
+
+add2(Board,NC,Board,Player).
+    
+/*remove un jeton dans une position valide*/
+remove2([[NC,N1,Player]|Board],Board):-
+    column(NC,N1),
+    piece(NC,N1,Player),
+    N is N1-1,
+    retract(piece(NC,N1,Player)),
+    retract(column(NC,N1)),
+	assert(column(NC,N)),
+    asserta(piece(NC,N1,'?')),!.
+
+remove2(Board,Board).
 
 /*Heuristique*/
 value(Player,Value):-canWin(Player,X),Value is 1000,!.
 value(Player,Value):-changePlayer(Player,NextPlayer),canWin(NextPlayer,X),Value is 0,!.
 value(Player,Value):-Value is 500.
-
