@@ -13,26 +13,27 @@ init_p(I,1):-assert(piece(I,1,'?')),I1 is I-1,init_p(I1,6),!.
 init_p(I,J):-assert(piece(I,J,'?')),J1 is J-1,init_p(I,J1),!.
 
 play(_,0,Vic,Defeat,_):-Vic is 0,Defeat is 0.
-play(Player,N,Vic,Defeat,_) :-
-        move(Player,X),
-            /*displayBoard(1,6),
-            writeln('***********'),*/
-            not(endGame(Player,X)),
-            changePlayer(Player,Player1),
-        play(Player1,N,Vic,Defeat,X).
 play(Player,N,Vic,Defeat,Final) :-
-            N1 is N-1,
-    		(isBoardFull(1) ->  Test is 1;
-            Test is 0),
-            retractall(column(_,_)),
-            retractall(piece(_,_,_)),
-            init_c(7),
-            init_p(7,6),
-            play(Player,N1,Vic1,Defeat1,Final),
-            (Test == 1 -> Vic is Vic1 , Defeat is Defeat1;
-        	Player == 'r' -> Vic is Vic1 + 1, Defeat is Defeat1;
-            Player == 'y' -> Vic is Vic1, Defeat is Defeat1 + 1
-                ).
+    move(Player,X),
+    /*displayBoard(1,6),
+    writeln('***********'),*/
+    not(endGame(Player,X)),
+    changePlayer(Player,Player1),
+    play(Player1,N,Vic,Defeat,X).
+play(Player,N,Vic,Defeat,Final) :-
+    (isBoardFull(1) ->  Test is 1; Test is 0),
+    retractall(column(_,_)),
+    retractall(piece(_,_,_)),
+    init_c(7),
+    init_p(7,6),
+    N1 is N-1,
+    writeln(N1),
+    play(Player,N1,Vic1,Defeat1,Final),
+    (Test == 1 -> Vic is Vic1 , Defeat is Defeat1;
+    Player == 'r' -> Vic is Vic1 + 1, Defeat is Defeat1;
+    Player == 'y' -> Vic is Vic1, Defeat is Defeat1 + 1
+    ).
+
 
 changePlayer('r','y').
 changePlayer('y','r').
@@ -63,18 +64,18 @@ remove(NC):-
         assert(column(NC,N1)),
     retract(piece(NC,N,_)),
     asserta(piece(NC,N,'?')).
-% Tests :         init,add(4,'r'),displayBoard(1,6),writeln(""),remove(4),displayBoard(1,6)
-%                         init,add(4,'r'),displayBoard(1,6),writeln(""),remove(X),displayBoard(1,6)
+% Tests : init,add(4,'r'),displayBoard(1,6),writeln(""),remove(4),displayBoard(1,6)
+% init,add(4,'r'),displayBoard(1,6),writeln(""),remove(X),displayBoard(1,6)
 
 /* Prédicat isBoardFull (1) pour vérifier si la grille est pleine */
 isBoardFull(7):-column(7,C), C==7,writeln('Egalite').
 isBoardFull(X):-column(X,C), C==7, X1 is X+1, isBoardFull(X1).
 
 endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),writeln(X),writeln(N).
-endGame(_,_):-isBoardFull(1),writeln('egalite'),displayBoard(1,6),!.
+endGame(_,_):-isBoardFull(1),displayBoard(1,6),!.
 
 /* predicat permettant a un utilisateur de jouer*/
-move('r',X):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
+move('r',X):-repeat,random(1,8,X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
 
 move('y',Move):-alpha_beta(1,[], 'r', 'y', -inf, inf, Move, Value),add(Move,'y'),!.
 
@@ -299,7 +300,7 @@ canWin(Player, X):-
 
 /*Implementation min-max with alpha beta prunning*/
 dispoMoves(0,[]).
-dispoMoves(N,[N|Moves]):-column(N,Size),Size<6,N1 is N-1,dispoMoves(N1,Moves),!.
+dispoMoves(N,[N|Moves]):-column(N,Size),Size<7,N1 is N-1,dispoMoves(N1,Moves),!.
 dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
 
 /**test: init,retract(column(5,0)),assert(column(5,7)),dispoMoves(7,Y).*/
@@ -313,10 +314,8 @@ dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
         (CurrentPlayer == MainPlayer, !, Value is V1 - V2; Value is V2 - V1).*/
 
 alpha_beta(0, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
-        valueDefensive(CurrentPlayer, Move, V1),
-        changePlayer(CurrentPlayer,NewPlayer),
-        valueDefensive(NewPlayer, Move, V2),
-        (CurrentPlayer == MainPlayer, !, Value is V1 - V2; Value is V2 - V1).
+        valueDefensive(CurrentPlayer, Move, Value1),
+    	Value is -Value1.
 
 alpha_beta(D, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
         D > 0,
@@ -328,13 +327,13 @@ alpha_beta(D, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
         evaluate_and_choose_Alpha_Beta(Moves, Board, NewPlayer, MainPlayer, D1, Alpha1, Beta1, nil, (Move, Value)).
         
 evaluate_and_choose_Alpha_Beta([Move|Moves],Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove) :-
-        add2(Board,Move,NewBoard,CurrentPlayer),
+       add2(Board,Move,NewBoard,CurrentPlayer),
         (
                 (canWin(CurrentPlayer,X),!;isBoardFull(1)),!,
-                alpha_beta(0, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value);
-                alpha_beta(D, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value)
+                alpha_beta(0, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value);
+                alpha_beta(D, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value)
         ),
-    remove2(NewBoard,Board),
+    	remove2(NewBoard,Board),
         Value1 is -Value,
         cutoff(CurrentPlayer, MainPlayer, Move, Value1, D ,Alpha, Beta, Moves,Board, Move1, BestMove).
         
@@ -400,28 +399,24 @@ valueMax(Player,Move,Value):-
 
 valueHorizontal(Player,Move,Value):-
     column(Move, Y),
-    Y1 is Y+1,
-    fourInARowCheckR(Move,Y1,Player,R),
-    fourInARowCheckL(Move,Y1,Player,L),
+    fourInARowCheckR(Move,Y,Player,R),
+    fourInARowCheckL(Move,Y,Player,L),
     Value is 2*(R*L+R+L)+1.
 
 valueVertical(Player,Move,Value):-
     column(Move, Y),
-    Y1 is Y+1,
-    fourInAColumnCheckU(Move,Y1,Player,U),
-    fourInAColumnCheckD(Move,Y1,Player,D),
+    fourInAColumnCheckU(Move,Y,Player,U),
+    fourInAColumnCheckD(Move,Y,Player,D),
     Value is 2*(U*D+U+D)+1.
 
 valueDiagPrinc(Player,Move,Value):-
     column(Move, Y),
-    Y1 is Y+1,
-    fourInADiagCheckNE(Move,Y1,Player,U),
-    fourInADiagCheckSW(Move,Y1,Player,V),
+    fourInADiagCheckNE(Move,Y,Player,U),
+    fourInADiagCheckSW(Move,Y,Player,V),
     Value is 2*(U*V+U+V)+1.
 
 valueDiagSec(Player,Move,Value):-
     column(Move, Y),
-    Y1 is Y+1,
-    fourInADiagCheckSE(Move,Y1,Player,U),
-    fourInADiagCheckNW(Move,Y1,Player,V),
+    fourInADiagCheckSE(Move,Y,Player,U),
+    fourInADiagCheckNW(Move,Y,Player,V),
     Value is 2*(U*V+U+V)+1.
