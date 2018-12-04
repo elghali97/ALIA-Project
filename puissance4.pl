@@ -299,7 +299,7 @@ canWin(Player, X):-
 
 /*Implementation min-max with alpha beta prunning*/
 dispoMoves(0,[]).
-dispoMoves(N,[N|Moves]):-column(N,Size),Size<7,N1 is N-1,dispoMoves(N1,Moves),!.
+dispoMoves(N,[N|Moves]):-column(N,Size),Size<6,N1 is N-1,dispoMoves(N1,Moves),!.
 dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
 
 /**test: init,retract(column(5,0)),assert(column(5,7)),dispoMoves(7,Y).*/
