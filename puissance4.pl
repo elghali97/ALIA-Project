@@ -47,7 +47,7 @@ displayBoard(I,J):-piece(I,J,X),write(' | '),write(X),write(' | '),I1 is I+1,dis
 add(NC,Player):-
     column(NC,N),
     N<6,
-    NC<7,
+    NC=<7,
     N1 is N+1,
     retract(column(NC,N)),
         assert(column(NC,N1)),
@@ -355,7 +355,7 @@ cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves, Board, Mov
 add2(Board,NC,[[NC,N1,Player]|Board],Player):-
     column(NC,N),
     N<6,
-    NC<7,
+    NC=<7,
     N1 is N+1,
     piece(NC,N1,'?'),
     retract(piece(NC,N1,'?')),
