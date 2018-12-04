@@ -46,7 +46,8 @@ displayBoard(I,J):-piece(I,J,X),write(' | '),write(X),write(' | '),I1 is I+1,dis
 /*ajout d'un jeton dans une position valide*/
 add(NC,Player):-
     column(NC,N),
-    N<7,
+    N<6,
+    NC<7,
     N1 is N+1,
     retract(column(NC,N)),
         assert(column(NC,N1)),
@@ -353,7 +354,8 @@ cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves, Board, Mov
 /*ajout d'un jeton dans une position valide*/
 add2(Board,NC,[[NC,N1,Player]|Board],Player):-
     column(NC,N),
-    N<7,
+    N<6,
+    NC<7,
     N1 is N+1,
     piece(NC,N1,'?'),
     retract(piece(NC,N1,'?')),
