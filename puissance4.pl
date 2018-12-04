@@ -1,7 +1,7 @@
 :-dynamic column/2.
 :-dynamic piece/3.
 /*init du jeu*/
-init(N):-init_c(7),init_p(7,6),play('r',N,Vic,Defeat,_),write('victoires :'),writeln(Vic),write('defaites :'),writeln(Defeat),!. 
+init(N):-init_c(7),init_p(7,6),play('r',N,Vic,Defeat,_),write('victoires :'),writeln(Vic),write('defaites :'),writeln(Defeat),!.
 /*init des colonnes à 0*/
 init_c(0):-!.
 init_c(N):-assert(column(N,0)),N1 is N-1,init_c(N1),!.
@@ -15,22 +15,22 @@ init_p(I,J):-assert(piece(I,J,'?')),J1 is J-1,init_p(I,J1),!.
 play(_,0,Vic,Defeat,_):-Vic is 0,Defeat is 0.
 play(Player,N,Vic,Defeat,_) :-
         move(Player,X),
-    	/*displayBoard(1,6),
-    	writeln('***********'),*/
-    	not(endGame(Player,X)),
-    	changePlayer(Player,Player1),
+            displayBoard(1,6),
+            writeln('***********'),
+            not(endGame(Player,X)),
+            changePlayer(Player,Player1),
         play(Player1,N,Vic,Defeat,X).
 play(Player,N,Vic,Defeat,Final) :-
-    	N1 is N-1,
-    	retractall(column(_,_)),
-    	retractall(piece(_,_,_)),
-    	init_c(7),
-    	init_p(7,6),
-		play(Player,N1,Vic1,Defeat1,Final),
-    	(isBoardFull(1) -> Vic is Vic1 , Defeat is Defeat1;
+            N1 is N-1,
+            retractall(column(_,_)),
+            retractall(piece(_,_,_)),
+            init_c(7),
+            init_p(7,6),
+                play(Player,N1,Vic1,Defeat1,Final),
+            (isBoardFull(1) -> Vic is Vic1 , Defeat is Defeat1;
         Player == 'r' -> Vic is Vic1 + 1, Defeat is Defeat1;
-	    Player == 'y' -> Vic is Vic1, Defeat is Defeat1 + 1
-		).
+            Player == 'y' -> Vic is Vic1, Defeat is Defeat1 + 1
+                ).
 
 changePlayer('r','y').
 changePlayer('y','r').
@@ -47,7 +47,7 @@ add(NC,Player):-
     N<7,
     N1 is N+1,
     retract(column(NC,N)),
-	assert(column(NC,N1)),
+        assert(column(NC,N1)),
     retract(piece(NC,N1,_)),
     asserta(piece(NC,N1,Player)).
     
@@ -57,11 +57,11 @@ remove(NC):-
     N>0,
     N1 is N-1,
     retract(column(NC,N)),
-	assert(column(NC,N1)),
+        assert(column(NC,N1)),
     retract(piece(NC,N,_)),
     asserta(piece(NC,N,'?')).
-% Tests : 	init,add(4,'r'),displayBoard(1,6),writeln(""),remove(4),displayBoard(1,6)
-% 			init,add(4,'r'),displayBoard(1,6),writeln(""),remove(X),displayBoard(1,6)
+% Tests :         init,add(4,'r'),displayBoard(1,6),writeln(""),remove(4),displayBoard(1,6)
+%                         init,add(4,'r'),displayBoard(1,6),writeln(""),remove(X),displayBoard(1,6)
 
 /* Prédicat isBoardFull (1) pour vérifier si la grille est pleine */
 isBoardFull(7):-column(7,C), C==7,writeln('Egalite').
@@ -71,26 +71,26 @@ endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),writeln
 endGame(_,_):-isBoardFull(1),displayBoard(1,6),!.
 
 /* predicat permettant a un utilisateur de jouer*/
-move('r',X):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
+move('r',X):-repeat,read(X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
 
-move('y',Move):-alpha_beta(4,[], 'r', 'y', negativeInf, positiveInf, Move, Value),add(Move,'y'),!.
+move('y',Move):-alpha_beta(1,[], 'r', 'y', -inf, inf, Move, Value),add(Move,'y'),!.
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    CONDITIONS DE FIN DU JEU POUR SAVOIR SI UN JOUEUR A GAGNE/PERDU
-   
+  
    Les conditions de fin de jeu sont les suivantes :
    - Alignement de quatre pièces de même couleur horizontalement
    - Alignement de quatre pièces de même couleur verticalement
    - Alignement de quatre pièces de même couleur dans la direction de la diagonale principale
    - Alignement de quatre pièces de même couleur dans la direction de la diagonale secondaire
-   
+  
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /*Verification d'un alignement gagnant à partir d'une pièce (X,Y) avec sa couleur*/
 checkStatus(X,Y,Player):-
-	fourCheck(X,Y,Player),	
+        fourCheck(X,Y,Player),        
     (   Player == 'r' -> writeln('Le joueur rouge a gagné !');
-	    Player == 'y' -> writeln('Le joueur jaune a gagné !')
-	).
+            Player == 'y' -> writeln('Le joueur jaune a gagné !')
+        ).
 
 /* Comptage du nombre de pièce de même couleur à la suite dans une direction donnée
  - (X,Y) la position de la pièce dans le jeu
@@ -138,7 +138,7 @@ fourInARowCheckL(X,Y,Player,Sum):-
 
 
 /*test: init,add(1,'r'),add(2,'y'),add(3,'y'),add(4,'y'),add(5,'y'),fourInARowCheckL(4,1,'y',Sum,4).
- SUM =2*/ 
+ SUM =2*/
 
 
 
@@ -301,68 +301,50 @@ dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
 
 /**test: init,retract(column(5,0)),assert(column(5,7)),dispoMoves(7,Y).*/
 
-%%%%%%%%% Alpha-Beta optim :
-%%----------------------------
-inferior(X, negativeInf) :- !, fail.
-inferior(X,positiveInf) :- !.
-inferior(X,Y) :- X < Y.
 
-superior(X, positiveInf) :- !, fail.
-superior(X,negativeInf) :- !.
-superior(X,Y) :- X > Y.
-
-inverse(positiveInf, negativeInf) :- !.
-inverse(negativeInf, positiveInf) :- !.
-inverse(X, Y) :- Y is -1 * X.
-
-
-%%----------------------------
-
-alpha_beta(D, Board,CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
+/*alpha_beta(D, Board,CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
     (canWin('r',_);canWin('y',_)),
-	value(CurrentPlayer, V1),
-	changePlayer(CurrentPlayer, NewPlayer),
-	value(NewPlayer, V2),
-	(CurrentPlayer == MainPlayer, !, Value is V1 - V2; Value is V2 - V1).
+        value(CurrentPlayer, V1),
+        changePlayer(CurrentPlayer, NewPlayer),
+        value(NewPlayer, V2),
+        (CurrentPlayer == MainPlayer, !, Value is V1 - V2; Value is V2 - V1).*/
 
 alpha_beta(0, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
-	value(CurrentPlayer, V1),
-	changePlayer(CurrentPlayer, NewPlayer),
-	value(NewPlayer, V2),
-	(CurrentPlayer == MainPlayer, !, Value is V1 - V2; Value is V2 - V1).
+        valueDefensive(CurrentPlayer, Move, Value1),
+    	Value is -Value1.
 
 alpha_beta(D, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
-	D > 0,
-	dispoMoves(7, Moves),
-	inverse(Beta, Alpha1),
-	inverse(Alpha, Beta1),
-	D1 is D - 1,
-	changePlayer(CurrentPlayer, NewPlayer),
-	evaluate_and_choose_Alpha_Beta(Moves, Board, NewPlayer, MainPlayer, D1, Alpha1, Beta1, nil, (Move, Value)).
-	
+        D > 0,
+        dispoMoves(7, Moves),
+        Alpha1 is -Beta,
+        Beta1 is -Alpha,
+        D1 is D - 1,
+        changePlayer(CurrentPlayer, NewPlayer),
+        evaluate_and_choose_Alpha_Beta(Moves, Board, NewPlayer, MainPlayer, D1, Alpha1, Beta1, nil, (Move, Value)).
+        
 evaluate_and_choose_Alpha_Beta([Move|Moves],Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove) :-
-	add2(Board,Move,NewBoard,CurrentPlayer),
-	(
-		(canWin(CurrentPlayer,X),!;isBoardFull(1)),!, 
-		alpha_beta(0, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value);
-		alpha_beta(D, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value)
-	),
-    remove2(NewBoard,Board),
-	inverse(Value, Value1),
-	cutoff(CurrentPlayer, MainPlayer, Move, Value1, D ,Alpha, Beta, Moves,Board, Move1, BestMove).
-	
+       add2(Board,Move,NewBoard,CurrentPlayer),
+        (
+                (canWin(CurrentPlayer,X),!;isBoardFull(1)),!,
+                alpha_beta(0, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value);
+                alpha_beta(D, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value)
+        ),
+    	remove2(NewBoard,Board),
+        Value1 is -Value,
+        cutoff(CurrentPlayer, MainPlayer, Move, Value1, D ,Alpha, Beta, Moves,Board, Move1, BestMove).
+        
 evaluate_and_choose_Alpha_Beta([], Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move, (Move, Alpha)).
 
 cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, (Move, Value)) :-
-	superior(Value, Beta), !; Value == Beta.
+        Value >= Beta.
 
 cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, BestMove) :-
-	superior(Value, Alpha), inferior(Value, Beta), !,
-	evaluate_and_choose_Alpha_Beta(Moves, Board, CurrentPlayer, MainPlayer, D, Value, Beta, Move, BestMove).
+        Value > Alpha, Value < Beta,
+        evaluate_and_choose_Alpha_Beta(Moves, Board, CurrentPlayer, MainPlayer, D, Value, Beta, Move, BestMove).
 
 cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves, Board, Move1, BestMove) :-
-	(inferior(Value, Alpha), !; Value == Alpha),
-	evaluate_and_choose_Alpha_Beta(Moves,Board,CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove).
+        Value =< Alpha,
+        evaluate_and_choose_Alpha_Beta(Moves,Board,CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove).
 
 /*ajout d'un jeton dans une position valide*/
 add2(Board,NC,[[NC,N1,Player]|Board],Player):-
@@ -372,7 +354,7 @@ add2(Board,NC,[[NC,N1,Player]|Board],Player):-
     piece(NC,N1,'?'),
     retract(piece(NC,N1,'?')),
     retract(column(NC,N)),
-	assert(column(NC,N1)),
+        assert(column(NC,N1)),
     asserta(piece(NC,N1,Player)),!.
 
 add2(Board,NC,Board,Player).
@@ -384,7 +366,7 @@ remove2([[NC,N1,Player]|Board],Board):-
     N is N1-1,
     retract(piece(NC,N1,Player)),
     retract(column(NC,N1)),
-	assert(column(NC,N)),
+        assert(column(NC,N)),
     asserta(piece(NC,N1,'?')),!.
 
 remove2(Board,Board).
@@ -393,3 +375,43 @@ remove2(Board,Board).
 value(Player,Value):-canWin(Player,X),Value is 1000,!.
 value(Player,Value):-changePlayer(Player,NextPlayer),canWin(NextPlayer,X),Value is 0,!.
 value(Player,Value):-Value is 500.
+
+valueOffensive(Player,Move,Value):-
+    valueMax(Player,Move,Value).
+
+valueDefensive(Player,Move,Value):-
+    changePlayer(Player,NewPlayer),
+    valueMax(NewPlayer,Move,Value).
+    
+valueMax(Player,Move,Value):-
+    valueHorizontal(Player,Move,ValueH),
+    valueVertical(Player,Move,ValueV),
+    valueDiagPrinc(Player,Move,ValueDP),
+    valueDiagSec(Player,Move,ValueDS),
+    ValueMaxHV is max(ValueH,ValueV),
+    ValueMaxBis is max(ValueDP,ValueMaxHV),
+    Value is max(ValueMaxBis,ValueDS).
+
+valueHorizontal(Player,Move,Value):-
+    column(Move, Y),
+    fourInARowCheckR(Move,Y,Player,R),
+    fourInARowCheckL(Move,Y,Player,L),
+    Value is 2*(R*L+R+L)+1.
+
+valueVertical(Player,Move,Value):-
+    column(Move, Y),
+    fourInAColumnCheckU(Move,Y,Player,U),
+    fourInAColumnCheckD(Move,Y,Player,D),
+    Value is 2*(U*D+U+D)+1.
+
+valueDiagPrinc(Player,Move,Value):-
+    column(Move, Y),
+    fourInADiagCheckNE(Move,Y,Player,U),
+    fourInADiagCheckSW(Move,Y,Player,V),
+    Value is 2*(U*V+U+V)+1.
+
+valueDiagSec(Player,Move,Value):-
+    column(Move, Y),
+    fourInADiagCheckSE(Move,Y,Player,U),
+    fourInADiagCheckNW(Move,Y,Player,V),
+    Value is 2*(U*V+U+V)+1.
