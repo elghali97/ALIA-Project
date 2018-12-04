@@ -1,7 +1,7 @@
 :-dynamic column/2.
 :-dynamic piece/3.
 /*init du jeu*/
-init(N):-init_c(7),init_p(7,6),play('r',N,Vic,Defeat,_),write('victoires :'),writeln(Vic),write('defaites :'),writeln(Defeat),!.
+init(N,M1,M2):-init_c(7),init_p(7,6),play(['r',M1],['y',M2],N,Vic,Defeat,_),write('victoires :'),writeln(Vic),write('defaites :'),writeln(Defeat),!.
 /*init des colonnes à 0*/
 init_c(0):-!.
 init_c(N):-assert(column(N,0)),N1 is N-1,init_c(N1),!.
@@ -12,23 +12,22 @@ init_p(0,6):-!.
 init_p(I,1):-assert(piece(I,1,'?')),I1 is I-1,init_p(I1,6),!.
 init_p(I,J):-assert(piece(I,J,'?')),J1 is J-1,init_p(I,J1),!.
 
-play(_,0,Vic,Defeat,_):-Vic is 0,Defeat is 0.
-play(Player,N,Vic,Defeat,Final) :-
-    move(Player,X),
+play(_,_,0,Vic,Defeat,_):-Vic is 0,Defeat is 0.
+play([Player,M],NextPlayer,N,Vic,Defeat,Final) :-
+    move(Player,X,M),
     /*displayBoard(1,6),
     writeln('***********'),*/
     not(endGame(Player,X)),
-    changePlayer(Player,Player1),
-    play(Player1,N,Vic,Defeat,X).
-play(Player,N,Vic,Defeat,Final) :-
+    play(NextPlayer,[Player,M],N,Vic,Defeat,X).
+/*la nouvelle partie debute avec le gagnant de la precedente*/
+play([Player,M],NextPlayer,N,Vic,Defeat,Final) :-
     (isBoardFull(1) ->  Test is 1; Test is 0),
     retractall(column(_,_)),
     retractall(piece(_,_,_)),
     init_c(7),
     init_p(7,6),
     N1 is N-1,
-    writeln(N1),
-    play(Player,N1,Vic1,Defeat1,Final),
+    play([Player,M],NextPlayer,N1,Vic1,Defeat1,Final),
     (Test == 1 -> Vic is Vic1 , Defeat is Defeat1;
     Player == 'r' -> Vic is Vic1 + 1, Defeat is Defeat1;
     Player == 'y' -> Vic is Vic1, Defeat is Defeat1 + 1
@@ -75,9 +74,11 @@ endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),writeln
 endGame(_,_):-isBoardFull(1),displayBoard(1,6),!.
 
 /* predicat permettant a un utilisateur de jouer*/
-move('r',X):-repeat,random(1,8,X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
+move('r',X,0):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
+move('r',Move,M):-alpha_beta(M,4,[], 'y', 'r', -inf, inf, Move, Value),add(Move,'r'),!.
 
-move('y',Move):-alpha_beta(1,[], 'r', 'y', -inf, inf, Move, Value),add(Move,'y'),!.
+move('y',X,0):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,'y'),!.
+move('y',Move,M):-alpha_beta(M,4,[], 'r', 'y', -inf, inf, Move, Value),add(Move,'y'),!.
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    CONDITIONS DE FIN DU JEU POUR SAVOIR SI UN JOUEUR A GAGNE/PERDU
@@ -285,8 +286,9 @@ fourInADiagCheckNW(X,Y,Player,Sum):-
  */
 
 % Prédicat canWinColumn qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWinColumn(Player, column) )
-canWinColumn(Player,X):-X>0,X<8,add(X,Player),column(X,N),fourCheck(X,N,Player),remove(X),!.
-canWinColumn(_,X):-remove(X),fail.
+canWinColumn(Player,X):-X>0,X<8,add(X,Player),column(X,N),test(X,N,Player),!.
+test(X,N,Player):-fourCheck(X,N,Player),remove(X),!.
+test(X,N,Player):-remove(X),fail.
 
 % Prédicat canWin qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWin(Player,X) qui renvoie X la colonne où jouer pour gagner)
 canWin(Player, X):-
@@ -300,7 +302,7 @@ canWin(Player, X):-
 
 /*Implementation min-max with alpha beta prunning*/
 dispoMoves(0,[]).
-dispoMoves(N,[N|Moves]):-column(N,Size),Size<7,N1 is N-1,dispoMoves(N1,Moves),!.
+dispoMoves(N,[N|Moves]):-column(N,Size),Size<6,N1 is N-1,dispoMoves(N1,Moves),!.
 dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
 
 /**test: init,retract(column(5,0)),assert(column(5,7)),dispoMoves(7,Y).*/
@@ -313,42 +315,45 @@ dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
         value(NewPlayer, V2),
         (CurrentPlayer == MainPlayer, !, Value is V1 - V2; Value is V2 - V1).*/
 
-alpha_beta(0, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
-        valueDefensive(CurrentPlayer, Move, Value1),
+alpha_beta(Mode, 0, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
+        ( Mode == 1 ->  value(Player,Value1);
+          Mode == 2 ->  valueOffensive(Player,Move,Value1);
+          Mode == 3 ->  valueDefensive(CurrentPlayer, Move, Value1)
+    	),
     	Value is -Value1.
 
-alpha_beta(D, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
+alpha_beta(Mode, D, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
         D > 0,
         dispoMoves(7, Moves),
         Alpha1 is -Beta,
         Beta1 is -Alpha,
         D1 is D - 1,
         changePlayer(CurrentPlayer, NewPlayer),
-        evaluate_and_choose_Alpha_Beta(Moves, Board, NewPlayer, MainPlayer, D1, Alpha1, Beta1, nil, (Move, Value)).
+        evaluate_and_choose_Alpha_Beta(Mode, Moves, Board, NewPlayer, MainPlayer, D1, Alpha1, Beta1, nil, (Move, Value)).
         
-evaluate_and_choose_Alpha_Beta([Move|Moves],Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove) :-
+evaluate_and_choose_Alpha_Beta(Mode, [Move|Moves],Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove) :-
        add2(Board,Move,NewBoard,CurrentPlayer),
         (
                 (canWin(CurrentPlayer,X),!;isBoardFull(1)),!,
-                alpha_beta(0, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value);
-                alpha_beta(D, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value)
+                alpha_beta(Mode, 0, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value);
+                alpha_beta(Mode, D, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value)
         ),
     	remove2(NewBoard,Board),
         Value1 is -Value,
-        cutoff(CurrentPlayer, MainPlayer, Move, Value1, D ,Alpha, Beta, Moves,Board, Move1, BestMove).
+        cutoff(Mode, CurrentPlayer, MainPlayer, Move, Value1, D ,Alpha, Beta, Moves,Board, Move1, BestMove).
         
-evaluate_and_choose_Alpha_Beta([], Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move, (Move, Alpha)).
+evaluate_and_choose_Alpha_Beta(Mode, [], Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move, (Move, Alpha)).
 
-cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, (Move, Value)) :-
+cutoff(Mode, CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, (Move,Value)) :-
         Value >= Beta.
 
-cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, BestMove) :-
+cutoff(Mode, CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, BestMove) :-
         Value > Alpha, Value < Beta,
-        evaluate_and_choose_Alpha_Beta(Moves, Board, CurrentPlayer, MainPlayer, D, Value, Beta, Move, BestMove).
+        evaluate_and_choose_Alpha_Beta(Mode, Moves, Board, CurrentPlayer, MainPlayer, D, Value, Beta, Move, BestMove).
 
-cutoff(CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves, Board, Move1, BestMove) :-
+cutoff(Mode, CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves, Board, Move1, BestMove) :-
         Value =< Alpha,
-        evaluate_and_choose_Alpha_Beta(Moves,Board,CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove).
+        evaluate_and_choose_Alpha_Beta(Mode, Moves,Board,CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove).
 
 /*ajout d'un jeton dans une position valide*/
 add2(Board,NC,[[NC,N1,Player]|Board],Player):-
