@@ -438,7 +438,7 @@ evalTable(2,2, Value) :- Value is 6.
 evalTable(2,3, Value) :- Value is 8.
 evalTable(2,4, Value) :- Value is 8.
 evalTable(2,5, Value) :- Value is 6.
-evalTable(2,6, Value) :- Value is 3.
+evalTable(2,6, Value) :- Value is 4.
 
 evalTable(3,1, Value) :- Value is 5.
 evalTable(3,2, Value) :- Value is 8.
@@ -466,7 +466,7 @@ evalTable(6,2, Value) :- Value is 6.
 evalTable(6,3, Value) :- Value is 8.
 evalTable(6,4, Value) :- Value is 8.
 evalTable(6,5, Value) :- Value is 6.
-evalTable(6,6, Value) :- Value is 3.
+evalTable(6,6, Value) :- Value is 4.
 
 evalTable(7,1, Value) :- Value is 3.
 evalTable(7,2, Value) :- Value is 4.
@@ -474,3 +474,8 @@ evalTable(7,3, Value) :- Value is 5.
 evalTable(7,4, Value) :- Value is 5.
 evalTable(7,5, Value) :- Value is 4.
 evalTable(7,6, Value) :- Value is 3.
+
+valueSumColumnEmpty(Player, Move, Value) :- column(Move,Y), Y1 is Y+1, sumColumn(Move,6,Y1,Value).
+
+sumColumn(X,Limit,Limit,Value) :- evalTable(X,Limit, Value).
+sumColumn(X,Y,Limit,Somme) :- Y>=Limit,evalTable(X,Y, Value),  Y1 is (Y-1), sumColumn(X,Y1,Limit,Somme2), Somme is Somme2+Value .
