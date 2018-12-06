@@ -425,3 +425,52 @@ valueDiagSec(Player,Move,Value):-
     fourInADiagCheckSE(Move,Y,Player,U),
     fourInADiagCheckNW(Move,Y,Player,V),
     Value is 2*(U*V+U+V)+1.
+
+evalTable(1,1, Value) :- Value is 3.
+evalTable(1,2, Value) :- Value is 4.
+evalTable(1,3, Value) :- Value is 5.
+evalTable(1,4, Value) :- Value is 5.
+evalTable(1,5, Value) :- Value is 4.
+evalTable(1,6, Value) :- Value is 3.
+
+evalTable(2,1, Value) :- Value is 4.
+evalTable(2,2, Value) :- Value is 6.
+evalTable(2,3, Value) :- Value is 8.
+evalTable(2,4, Value) :- Value is 8.
+evalTable(2,5, Value) :- Value is 6.
+evalTable(2,6, Value) :- Value is 3.
+
+evalTable(3,1, Value) :- Value is 5.
+evalTable(3,2, Value) :- Value is 8.
+evalTable(3,3, Value) :- Value is 11.
+evalTable(3,4, Value) :- Value is 11.
+evalTable(3,5, Value) :- Value is 8.
+evalTable(3,6, Value) :- Value is 5.
+
+evalTable(4,1, Value) :- Value is 7.
+evalTable(4,2, Value) :- Value is 10.
+evalTable(4,3, Value) :- Value is 13.
+evalTable(4,4, Value) :- Value is 13.
+evalTable(4,5, Value) :- Value is 10.
+evalTable(4,6, Value) :- Value is 7.
+
+evalTable(5,1, Value) :- Value is 5.
+evalTable(5,2, Value) :- Value is 8.
+evalTable(5,3, Value) :- Value is 11.
+evalTable(5,4, Value) :- Value is 11.
+evalTable(5,5, Value) :- Value is 8.
+evalTable(5,6, Value) :- Value is 5.
+
+evalTable(6,1, Value) :- Value is 4.
+evalTable(6,2, Value) :- Value is 6.
+evalTable(6,3, Value) :- Value is 8.
+evalTable(6,4, Value) :- Value is 8.
+evalTable(6,5, Value) :- Value is 6.
+evalTable(6,6, Value) :- Value is 3.
+
+evalTable(7,1, Value) :- Value is 3.
+evalTable(7,2, Value) :- Value is 4.
+evalTable(7,3, Value) :- Value is 5.
+evalTable(7,4, Value) :- Value is 5.
+evalTable(7,5, Value) :- Value is 4.
+evalTable(7,6, Value) :- Value is 3.
