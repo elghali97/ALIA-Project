@@ -322,8 +322,8 @@ alpha_beta(Mode, 0, _, CurrentPlayer, _, _, _, Move, Value) :-
         ( Mode == 1 ->  value(CurrentPlayer,Value1);
           Mode == 2 ->  valueOffensive(CurrentPlayer,Move,Value1);
           Mode == 3 ->  valueDefensive(CurrentPlayer, Move, Value1);
-          Mode == 4 ->  valueConnexeVide(CurrentPlayer,Value1,1,6);
-          Mode == 5 ->  valuesumColumn(CurrentPlayer,Value1,1,6)
+          Mode == 4 ->  valuesumColumn(CurrentPlayer,Value1,1,6);
+          Mode == 5 ->  valueConnexeVide(CurrentPlayer,Value1,1,6)
     	),
     	Value is -Value1.
 
@@ -738,7 +738,7 @@ valueDefensive(Player,Move,Value):-
     valueMax(NewPlayer,Move,Value).
 
 valueConnexeVide(Player,Value,_,_):-canWin(Player,_),!,Value is 46000.
-valueConnexeVide(Player,Value,_,_):-changePlayer(Player,Opp),canWin(Opp,_),!,Value is 1.
+valueConnexeVide(Player,Value,_,_):-changePlayer(Player,Opp),canWin(Opp,_),!,Value is 46000.
 valueConnexeVide(Player,Value,7,1):-allOpen(7,1,Player,Total),Value is Total.
 valueConnexeVide(Player,Value,7,J):-allOpen(7,J,Player,Total),J1 is J-1,valueConnexeVide(Player,Value1,1,J1),Value is Value1+Total,!.
 valueConnexeVide(Player,Value,I,J):-allOpen(I,J,Player,Total),I1 is I+1,valueConnexeVide(Player,Value1,I1,J),Value is Value1+Total,!.
@@ -828,7 +828,7 @@ evalTable(7,5, 4).
 evalTable(7,6, 3).
 
 valuesumColumn(Player,Value,_,_):-canWin(Player,_),!,Value is 1000.
-valuesumColumn(Player,Value,_,_):-changePlayer(Player,Opp),canWin(Opp,_),!,Value is 1.
+valuesumColumn(Player,Value,_,_):-changePlayer(Player,Opp),canWin(Opp,_),!,Value is 1000.
 valuesumColumn(Player,Value,7,1):-evalTable(7,1,Total),
     (piece(7,1,Player) -> Value is Total;
      piece(7,1,'?') ->  Value is 0;
@@ -844,4 +844,3 @@ valuesumColumn(Player,Value,I,J):-evalTable(I,J,Total),I1 is I+1,valuesumColumn(
      piece(I,J,'?') ->  Value is Value1;
      Value is Value1-Total
     ),!.
-
