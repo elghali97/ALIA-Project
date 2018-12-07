@@ -737,8 +737,8 @@ valueDefensive(Player,Move,Value):-
     changePlayer(Player,NewPlayer),
     valueMax(NewPlayer,Move,Value).
 
-valueConnexeVide(Player,Value,_,_):-canWin(Player,_),!,Value is 46000.
-valueConnexeVide(Player,Value,_,_):-changePlayer(Player,Opp),canWin(Opp,_),!,Value is 46000.
+valueConnexeVide(Player,Value,_,_):-canWin(Player,_),!,Value is 460000.
+valueConnexeVide(Player,Value,_,_):-changePlayer(Player,Opp),canWin(Opp,_),!,Value is 460000.
 valueConnexeVide(Player,Value,7,1):-allOpen(7,1,Player,Total),Value is Total.
 valueConnexeVide(Player,Value,7,J):-allOpen(7,J,Player,Total),J1 is J-1,valueConnexeVide(Player,Value1,1,J1),Value is Value1+Total,!.
 valueConnexeVide(Player,Value,I,J):-allOpen(I,J,Player,Total),I1 is I+1,valueConnexeVide(Player,Value1,I1,J),Value is Value1+Total,!.
