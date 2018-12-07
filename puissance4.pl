@@ -77,10 +77,14 @@ endGame(_,_):-isBoardFull(1),displayBoard(1,6),!.
 /* predicat permettant a un utilisateur de jouer*/
 move('r',X,-1):-displayBoard(1,6),repeat,read(X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
 move('r',X,0):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
+move('r',Move,M):-M>0,canWin('r',Move),add(Move,'r'),!.
+move('r',Move,M):-M>0,canWin('y',Move),add(Move,'r'),!.
 move('r',Move,M):-alpha_beta(M,4,[], 'y', 'r', -inf, inf, Move, _),add(Move,'r'),!.
 
 move('y',X,-1):-displayBoard(1,6),repeat,read(X),X>0,X<8,column(X,N),N<6,add(X,'y'),!.
 move('y',X,0):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,'y'),!.
+move('y',Move,M):-M>0,canWin('y',Move),add(Move,'y'),!.
+move('y',Move,M):-M>0,canWin('r',Move),add(Move,'y'),!.
 move('y',Move,M):-alpha_beta(M,4,[], 'r', 'y', -inf, inf, Move, _),add(Move,'y'),!.
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
