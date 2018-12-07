@@ -1,6 +1,7 @@
 :-dynamic column/2.
 :-dynamic piece/3.
 /*init du jeu*/
+/*N: nombre de parties,, M1,M2: les modes des joueurs 1 et 2*/
 init(N,M1,M2):-init_c(7),init_p(7,6),play(['r',M1],['y',M2],N,Vic,Defeat,_),write('victoires :'),writeln(Vic),write('defaites :'),writeln(Defeat),!.
 /*init des colonnes à 0*/
 init_c(0):-!.
@@ -13,7 +14,7 @@ init_p(I,1):-assert(piece(I,1,'?')),I1 is I-1,init_p(I1,6),!.
 init_p(I,J):-assert(piece(I,J,'?')),J1 is J-1,init_p(I,J1),!.
 
 play(_,_,0,Vic,Defeat,_):-Vic is 0,Defeat is 0.
-play([Player,M],NextPlayer,N,Vic,Defeat,Final) :-
+play([Player,M],NextPlayer,N,Vic,Defeat,_) :-
     move(Player,X,M),
     /*displayBoard(1,6),
     writeln('***********'),*/
@@ -74,11 +75,13 @@ endGame(Player,X):-column(X,N),checkStatus(X,N,Player),displayBoard(1,6),writeln
 endGame(_,_):-isBoardFull(1),displayBoard(1,6),!.
 
 /* predicat permettant a un utilisateur de jouer*/
+move('r',X,-1):-displayBoard(1,6),repeat,read(X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
 move('r',X,0):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,'r'),!.
-move('r',Move,M):-alpha_beta(M,4,[], 'y', 'r', -inf, inf, Move, Value),add(Move,'r'),!.
+move('r',Move,M):-alpha_beta(M,4,[], 'y', 'r', -inf, inf, Move, _),add(Move,'r'),!.
 
+move('y',X,-1):-displayBoard(1,6),repeat,read(X),X>0,X<8,column(X,N),N<6,add(X,'y'),!.
 move('y',X,0):-repeat,random(1,7,X),X>0,X<8,column(X,N),N<6,add(X,'y'),!.
-move('y',Move,M):-alpha_beta(M,4,[], 'r', 'y', -inf, inf, Move, Value),add(Move,'y'),!.
+move('y',Move,M):-alpha_beta(M,4,[], 'r', 'y', -inf, inf, Move, _),add(Move,'y'),!.
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    CONDITIONS DE FIN DU JEU POUR SAVOIR SI UN JOUEUR A GAGNE/PERDU
@@ -288,7 +291,7 @@ fourInADiagCheckNW(X,Y,Player,Sum):-
 % Prédicat canWinColumn qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWinColumn(Player, column) )
 canWinColumn(Player,X):-X>0,X<8,add(X,Player),column(X,N),test(X,N,Player),!.
 test(X,N,Player):-fourCheck(X,N,Player),remove(X),!.
-test(X,N,Player):-remove(X),fail.
+test(X,_,_):-remove(X),fail.
 
 % Prédicat canWin qui vérifie si un joueur a un coup gagnant dans une colonne(appelez canWin(Player,X) qui renvoie X la colonne où jouer pour gagner)
 canWin(Player, X):-
@@ -315,10 +318,12 @@ dispoMoves(N,Moves):-N1 is N-1,dispoMoves(N1,Moves).
         value(NewPlayer, V2),
         (CurrentPlayer == MainPlayer, !, Value is V1 - V2; Value is V2 - V1).*/
 
-alpha_beta(Mode, 0, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) :-
-        ( Mode == 1 ->  value(Player,Value1);
-          Mode == 2 ->  valueOffensive(Player,Move,Value1);
-          Mode == 3 ->  valueDefensive(CurrentPlayer, Move, Value1)
+alpha_beta(Mode, 0, _, CurrentPlayer, _, _, _, Move, Value) :-
+        ( Mode == 1 ->  value(CurrentPlayer,Value1);
+          Mode == 2 ->  valueOffensive(CurrentPlayer,Move,Value1);
+          Mode == 3 ->  valueDefensive(CurrentPlayer, Move, Value1);
+          Mode == 4 ->  valueConnexeVide(CurrentPlayer,Value1,1,6);
+          Mode == 5 ->  valuesumColumn(CurrentPlayer,Value1,1,6)
     	),
     	Value is -Value1.
 
@@ -334,24 +339,24 @@ alpha_beta(Mode, D, Board, CurrentPlayer, MainPlayer, Alpha, Beta, Move, Value) 
 evaluate_and_choose_Alpha_Beta(Mode, [Move|Moves],Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove) :-
        add2(Board,Move,NewBoard,CurrentPlayer),
         (
-                (canWin(CurrentPlayer,X),!;isBoardFull(1)),!,
-                alpha_beta(Mode, 0, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value);
-                alpha_beta(Mode, D, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, MoveX, Value)
+                (canWin(CurrentPlayer,_),!;isBoardFull(1)),!,
+                alpha_beta(Mode, 0, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, _, Value);
+                alpha_beta(Mode, D, NewBoard, CurrentPlayer, MainPlayer, Alpha, Beta, _, Value)
         ),
     	remove2(NewBoard,Board),
         Value1 is -Value,
         cutoff(Mode, CurrentPlayer, MainPlayer, Move, Value1, D ,Alpha, Beta, Moves,Board, Move1, BestMove).
         
-evaluate_and_choose_Alpha_Beta(Mode, [], Board, CurrentPlayer, MainPlayer, D, Alpha, Beta, Move, (Move, Alpha)).
+evaluate_and_choose_Alpha_Beta(_, [], _, _, _, _, Alpha, _, Move, (Move, Alpha)).
 
-cutoff(Mode, CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, (Move,Value)) :-
+cutoff(_, _, _, Move, Value, _, _, Beta, _,_, _, (Move,Value)) :-
         Value >= Beta.
 
-cutoff(Mode, CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, Move1, BestMove) :-
+cutoff(Mode, CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves,Board, _, BestMove) :-
         Value > Alpha, Value < Beta,
         evaluate_and_choose_Alpha_Beta(Mode, Moves, Board, CurrentPlayer, MainPlayer, D, Value, Beta, Move, BestMove).
 
-cutoff(Mode, CurrentPlayer, MainPlayer, Move, Value, D, Alpha, Beta, Moves, Board, Move1, BestMove) :-
+cutoff(Mode, CurrentPlayer, MainPlayer, _, Value, D, Alpha, Beta, Moves, Board, Move1, BestMove) :-
         Value =< Alpha,
         evaluate_and_choose_Alpha_Beta(Mode, Moves,Board,CurrentPlayer, MainPlayer, D, Alpha, Beta, Move1, BestMove).
 
@@ -367,7 +372,7 @@ add2(Board,NC,[[NC,N1,Player]|Board],Player):-
         assert(column(NC,N1)),
     asserta(piece(NC,N1,Player)),!.
 
-add2(Board,NC,Board,Player).
+add2(Board,_,Board,_).
     
 /*remove un jeton dans une position valide*/
 remove2([[NC,N1,Player]|Board],Board):-
@@ -382,9 +387,348 @@ remove2([[NC,N1,Player]|Board],Board):-
 remove2(Board,Board).
 
 /*Heuristique*/
-value(Player,Value):-canWin(Player,X),Value is 1000,!.
-value(Player,Value):-changePlayer(Player,NextPlayer),canWin(NextPlayer,X),Value is 0,!.
-value(Player,Value):-Value is 500.
+value(Player,Value):-canWin(Player,_),Value is 1000,!.
+value(Player,Value):-changePlayer(Player,NextPlayer),canWin(NextPlayer,_),Value is 0,!.
+value(_,Value):-Value is 500.
+
+
+/*2 cotes*/
+
+/*evaluer pour une piece*/
+allOpen(X,Y,Color,Total):-
+    open1(X, Y,Color,Total1),
+    half_open2(X,Y,Color,Total2),
+    open2(X, Y,Color,Total3),
+    half_open3(X,Y,Color,Total4),
+    open3(X, Y,Color,Total5),
+    
+    changePlayer(Color,ColorOpp),
+    
+    open1(X, Y,ColorOpp,Total6),
+    half_open2(X,Y,ColorOpp,Total7),
+    open2(X, Y,ColorOpp,Total8),
+    half_open3(X,Y,ColorOpp,Total9),
+    open3(X, Y,ColorOpp,Total10),
+    
+    Total is (Total1 + Total2*3 + Total3*9+Total4*20+
+	    Total5*500) -
+	(Total6 + Total7*3 + Total8*9+Total9*20+
+	    Total10*500) + 23000 .
+    
+    
+
+
+/* open check les pieces dans cette configuration  _r_*/
+open1(X, Y,Color,Total):-
+    piece(X,Y,Color),!,
+    openHelperVertical1(X,Y,Color,PTotal1),
+    openHelperHorizontal1(X,Y,Color,PTotal2),
+    openHelperDiagPrinc1(X,Y,Color,PTotal3),
+    openHelperDiagSec1(X,Y,Color,PTotal4),
+    Total is PTotal1+PTotal2+PTotal3+PTotal4.
+open1(_,_,_,Total):- Total is 0.
+
+openHelperVertical1(X,Y,_,PTotal):-
+    X1 is X+1,
+    piece(X1,Y,'?'),
+    X2 is X-1, 
+   piece(X2,Y,'?'),!,
+    PTotal is 1.
+
+openHelperVertical1(_,_,_,PTotal):- PTotal is 0.
+
+openHelperHorizontal1(X,Y,_,PTotal):-
+    Y1 is Y+1,
+    piece(X,Y1,'?'),
+    Y2 is Y-1, 
+    piece(X,Y2,'?'),!,
+    PTotal is 1.
+
+    
+openHelperHorizontal1(_,_,_,PTotal):- PTotal is 0.
+
+openHelperDiagPrinc1(X,Y,_,PTotal):-
+    X1 is X+1,
+    X2 is X-1,
+    Y1 is Y+1,
+    Y2 is Y-1, 
+    piece(X1,Y1,'?'),
+    piece(X2,Y2,'?'),!,
+    PTotal is 1.
+    
+openHelperDiagPrinc1(_,_,_,PTotal):- PTotal is 0.
+
+
+openHelperDiagSec1(X,Y,_,PTotal):-
+    X1 is X+1,
+    X2 is X-1,
+    Y1 is Y+1,
+    Y2 is Y-1, 
+    piece(X2,Y1,'?'),
+    piece(X1,Y2,'?'),!,
+    PTotal is 1.
+    
+openHelperDiagSec1(_,_,_,PTotal):- PTotal is 0.
+/*fin open*/
+
+/*half_open compte les pieces dans cette positon rr_*/
+half_open2(X,Y,Color,Total):-
+    openHelperhalfVertical2(X,Y,Color,PTotal1),
+    openHelperhalfHorizontal2(X,Y,Color,PTotal2),
+    openHelperhalfDiagPrinc2(X,Y,Color,PTotal3),
+    openHelperhalfDiagSec2(X,Y,Color,PTotal4),
+    Total is PTotal1+PTotal2+PTotal3+PTotal4.
+
+openHelperhalfVertical2(X,Y,Color,PTotal1):- 
+    X1 is X+1,
+    X2 is X+2,
+    piece(X1,Y,Color),
+    piece(X2,Y,'?'),!,
+    PTotal1 is 1.
+openHelperhalfVertical2(_,_,_,PTotal1):-
+    PTotal1 is 0.
+
+
+openHelperhalfHorizontal2(X,Y,Color,PTotal2):- 
+    Y1 is Y+1,
+    Y2 is Y+2,
+    piece(X,Y1,Color),
+    piece(X,Y2,'?'),!,
+    PTotal2 is 1.
+openHelperhalfHorizontal2(_,_,_,PTotal2):-
+    PTotal2 is 0.
+
+
+openHelperhalfDiagPrinc2(X,Y,Color,PTotal3):- 
+    X1 is X+1,
+    X2 is X+2,
+    Y1 is Y+1,
+    Y2 is Y+2, 
+    piece(X1,Y1,Color),
+    piece(X2,Y2,'?'),!,
+    PTotal3 is 1.
+openHelperhalfDiagPrinc2(_,_,_,PTotal3):-
+    PTotal3 is 0.
+
+
+openHelperhalfDiagSec2(X,Y,Color,PTotal4):- 
+    X1 is X+1,
+    X2 is X+2,
+    Y1 is Y-1,
+    Y2 is Y-2, 
+    piece(X1,Y1,Color),
+    piece(X2,Y2,'?'),!,
+    PTotal4 is 1.
+openHelperhalfDiagSec2(_,_,_,PTotal4):- 
+    PTotal4 is 0.
+
+/*-Fin half open */
+
+/*open2 _rr_ */
+open2(X, Y,Color,Total):-
+    piece(X,Y,Color),!,
+    openHelperVertical2(X,Y,Color,PTotal1),
+    openHelperHorizontal2(X,Y,Color,PTotal2),
+    openHelperDiagPrinc2(X,Y,Color,PTotal3),
+    openHelperDiagSec2(X,Y,Color,PTotal4),
+    Total is PTotal1+PTotal2+PTotal3+PTotal4.
+open2(_,_,_,Total):- Total is 0.
+
+openHelperVertical2(X,Y,Color,PTotal):-
+    X1 is X+1,
+    X2 is X+2,
+    X3 is X-1,
+    piece(X1,Y,Color), 
+    piece(X2,Y,'?'),
+    piece(X3,Y,'?'),!,
+    PTotal is 1.
+    
+openHelperVertical2(_,_,_,PTotal):- PTotal is 0.
+
+
+openHelperHorizontal2(X,Y,Color,PTotal):-
+    Y1 is Y+1,
+    Y2 is Y+2,
+    Y3 is Y-1,
+    piece(X,Y1,Color), 
+    piece(X,Y2,'?'),
+    piece(X,Y3,'?'),!,
+    PTotal is 1.
+
+    
+openHelperHorizontal2(_,_,_,PTotal):- PTotal is 0.
+
+openHelperDiagPrinc2(X,Y,Color,PTotal):-
+    X1 is X+1,
+    X2 is X+2,
+    Y1 is Y+1,
+    Y2 is Y+2,
+    X3 is X-1,
+    Y3 is Y-1,
+    piece(X1,Y1,Color),
+    piece(X2,Y2,'?'),
+    piece(X3,Y3,'?'),!,
+    PTotal is 1.
+    
+openHelperDiagPrinc2(_,_,_,PTotal):- PTotal is 0.
+
+
+openHelperDiagSec2(X,Y,Color,PTotal):-
+    X1 is X+1,
+    X2 is X+2,
+    Y1 is Y-1,
+    Y2 is Y-2,
+    X3 is X-1,
+    Y3 is Y+1,
+    piece(X1,Y1,Color),
+    piece(X2,Y2,'?'),
+    piece(X3,Y3,'?'),
+    PTotal is 1.
+    
+openHelperDiagSec2(_,_,_,PTotal):- PTotal is 0.
+/* Fin open2 _rr_ */
+
+/* half open3 rrr_ */
+
+half_open3(X,Y,Color,Total):-
+    piece(X,Y,Color),!,
+    openHelperhalfVertical3(X,Y,Color,PTotal1),
+    openHelperhalfHorizontal3(X,Y,Color,PTotal2),
+    openHelperhalfDiagPrinc3(X,Y,Color,PTotal3),
+    openHelperhalfDiagSec3(X,Y,Color,PTotal4),
+    Total is PTotal1+PTotal2+PTotal3+PTotal4.
+half_open3(_,_,_,Total):- Total is 0.
+
+openHelperhalfVertical3(X,Y,Color,PTotal1):- 
+    X1 is X+1,
+    X2 is X+2,
+    X3 is X+3,
+    piece(X1,Y,Color),
+    piece(X2,Y,Color),
+    piece(X3,Y,'?'),!,
+    PTotal1 is 1.
+openHelperhalfVertical3(_,_,_,PTotal1):-
+    PTotal1 is 0.
+
+
+openHelperhalfHorizontal3(X,Y,Color,PTotal2):- 
+    Y1 is Y+1,
+    Y2 is Y+2,
+    Y3 is Y+3,
+    piece(X,Y1,Color),
+    piece(X,Y2,Color),
+    piece(X,Y3,'?'),!,
+    PTotal2 is 1.
+openHelperhalfHorizontal3(_,_,_,PTotal2):-
+    PTotal2 is 0.
+
+
+openHelperhalfDiagPrinc3(X,Y,Color,PTotal3):- 
+    X1 is X+1,
+    X2 is X+2,
+    Y1 is Y+1,
+    Y2 is Y+2,
+    X3 is X+3,
+    Y3 is Y+3,
+    piece(X1,Y1,Color),
+    piece(X2,Y2,Color),
+    piece(X3,Y3,'?'),!,
+    PTotal3 is 1.
+openHelperhalfDiagPrinc3(_,_,_,PTotal3):-
+    PTotal3 is 0.
+
+
+openHelperhalfDiagSec3(X,Y,Color,PTotal4):- 
+    X1 is X+1,
+    X2 is X+2,
+    Y1 is Y-1,
+    Y2 is Y-2,
+    X3 is X+3,
+    Y3 is Y-3,
+    piece(X1,Y1,Color),
+    piece(X2,Y2,Color),
+    piece(X3,Y3,'?'),!,
+    PTotal4 is 1.
+openHelperhalfDiagSec3(_,_,_,PTotal4):- 
+    PTotal4 is 0.
+/* Fin half open3 rrr_ */
+
+/* open3  _rrr_ */
+
+open3(X, Y,Color,Total):-
+    piece(X,Y,Color),!,
+    openHelperVertical3(X,Y,Color,PTotal1),
+    openHelperHorizontal3(X,Y,Color,PTotal2),
+    openHelperDiagPrinc3(X,Y,Color,PTotal3),
+    openHelperDiagSec3(X,Y,Color,PTotal4),
+    Total is PTotal1+PTotal2+PTotal3+PTotal4.
+open3(_,_,_,Total):- Total is 0.
+
+openHelperVertical3(X,Y,Color,PTotal):-
+    X1 is X+1,
+    X2 is X+2,
+    X3 is X+3,
+    X4 is X-1,
+    piece(X1,Y,Color), 
+    piece(X2,Y,Color),
+    piece(X3,Y,'?'),
+    piece(X4,Y,'?'),!,
+    PTotal is 1.
+    
+openHelperVertical3(_,_,_,PTotal):- PTotal is 0.
+
+
+openHelperHorizontal3(X,Y,Color,PTotal):-
+    Y1 is Y+1,
+    Y2 is Y+2,
+    Y3 is Y+3,
+    Y4 is Y-1,
+    piece(X,Y1,Color), 
+    piece(X,Y2,Color),
+    piece(X,Y3,'?'),
+    piece(X,Y4,'?'),!,
+    PTotal is 1.
+
+    
+openHelperHorizontal3(_,_,_,PTotal):- PTotal is 0.
+
+openHelperDiagPrinc3(X,Y,Color,PTotal):-
+    X1 is X+1,
+    X2 is X+2,
+    Y1 is Y+1,
+    Y2 is Y+2,
+    X3 is X-1,
+    Y3 is Y-1,
+    X4 is X+3,
+    Y4 is Y+3,
+    piece(X1,Y1, Color),
+    piece(X2,Y2,Color),
+    piece(X3,Y3,'?'),
+    piece(X4,Y4,'?'),!,
+    PTotal is 1.
+    
+openHelperDiagPrinc3(_,_,_,PTotal):- PTotal is 0.
+
+
+openHelperDiagSec3(X,Y,Color,PTotal):-
+    X1 is X+1,
+    X2 is X+2,
+    Y1 is Y-1,
+    Y2 is Y-2,
+    X3 is X-1,
+    Y3 is Y+1,
+    X4 is X+3,
+    Y4 is Y-3,
+    piece(X1,Y1,Color),
+    piece(X2,Y2,Color),
+    piece(X3,Y3,'?'),
+    piece(X4,Y4,'?'),!,
+    PTotal is 1.
+    
+openHelperDiagSec3(_,_,_,PTotal):- PTotal is 0.
+
+/*Fin open3 _rrr_*/
+
 
 valueOffensive(Player,Move,Value):-
     valueMax(Player,Move,Value).
@@ -392,6 +736,13 @@ valueOffensive(Player,Move,Value):-
 valueDefensive(Player,Move,Value):-
     changePlayer(Player,NewPlayer),
     valueMax(NewPlayer,Move,Value).
+
+valueConnexeVide(Player,Value,_,_):-canWin(Player,_),!,Value is 46000.
+valueConnexeVide(Player,Value,_,_):-changePlayer(Player,Opp),canWin(Opp,_),!,Value is 1.
+valueConnexeVide(Player,Value,7,1):-allOpen(7,1,Player,Total),Value is Total.
+valueConnexeVide(Player,Value,7,J):-allOpen(7,J,Player,Total),J1 is J-1,valueConnexeVide(Player,Value1,1,J1),Value is Value1+Total,!.
+valueConnexeVide(Player,Value,I,J):-allOpen(I,J,Player,Total),I1 is I+1,valueConnexeVide(Player,Value1,I1,J),Value is Value1+Total,!.
+
     
 valueMax(Player,Move,Value):-
     valueHorizontal(Player,Move,ValueH),
@@ -426,56 +777,71 @@ valueDiagSec(Player,Move,Value):-
     fourInADiagCheckNW(Move,Y,Player,V),
     Value is 2*(U*V+U+V)+1.
 
-evalTable(1,1, Value) :- Value is 3.
-evalTable(1,2, Value) :- Value is 4.
-evalTable(1,3, Value) :- Value is 5.
-evalTable(1,4, Value) :- Value is 5.
-evalTable(1,5, Value) :- Value is 4.
-evalTable(1,6, Value) :- Value is 3.
 
-evalTable(2,1, Value) :- Value is 4.
-evalTable(2,2, Value) :- Value is 6.
-evalTable(2,3, Value) :- Value is 8.
-evalTable(2,4, Value) :- Value is 8.
-evalTable(2,5, Value) :- Value is 6.
-evalTable(2,6, Value) :- Value is 4.
+evalTable(1,1, 3).
+evalTable(1,2, 4).
+evalTable(1,3, 5).
+evalTable(1,4, 5).
+evalTable(1,5, 4).
+evalTable(1,6, 3).
 
-evalTable(3,1, Value) :- Value is 5.
-evalTable(3,2, Value) :- Value is 8.
-evalTable(3,3, Value) :- Value is 11.
-evalTable(3,4, Value) :- Value is 11.
-evalTable(3,5, Value) :- Value is 8.
-evalTable(3,6, Value) :- Value is 5.
+evalTable(2,1, 4).
+evalTable(2,2, 6).
+evalTable(2,3, 8).
+evalTable(2,4, 8).
+evalTable(2,5, 6).
+evalTable(2,6, 4).
 
-evalTable(4,1, Value) :- Value is 7.
-evalTable(4,2, Value) :- Value is 10.
-evalTable(4,3, Value) :- Value is 13.
-evalTable(4,4, Value) :- Value is 13.
-evalTable(4,5, Value) :- Value is 10.
-evalTable(4,6, Value) :- Value is 7.
+evalTable(3,1, 5).
+evalTable(3,2, 8).
+evalTable(3,3, 11).
+evalTable(3,4, 11).
+evalTable(3,5, 8).
+evalTable(3,6, 5).
 
-evalTable(5,1, Value) :- Value is 5.
-evalTable(5,2, Value) :- Value is 8.
-evalTable(5,3, Value) :- Value is 11.
-evalTable(5,4, Value) :- Value is 11.
-evalTable(5,5, Value) :- Value is 8.
-evalTable(5,6, Value) :- Value is 5.
+evalTable(4,1, 7).
+evalTable(4,2, 10).
+evalTable(4,3, 13).
+evalTable(4,4, 13).
+evalTable(4,5, 10).
+evalTable(4,6, 7).
 
-evalTable(6,1, Value) :- Value is 4.
-evalTable(6,2, Value) :- Value is 6.
-evalTable(6,3, Value) :- Value is 8.
-evalTable(6,4, Value) :- Value is 8.
-evalTable(6,5, Value) :- Value is 6.
-evalTable(6,6, Value) :- Value is 4.
+evalTable(5,1, 5).
+evalTable(5,2, 8).
+evalTable(5,3, 11).
+evalTable(5,4, 11).
+evalTable(5,5, 8).
+evalTable(5,6, 5).
 
-evalTable(7,1, Value) :- Value is 3.
-evalTable(7,2, Value) :- Value is 4.
-evalTable(7,3, Value) :- Value is 5.
-evalTable(7,4, Value) :- Value is 5.
-evalTable(7,5, Value) :- Value is 4.
-evalTable(7,6, Value) :- Value is 3.
+evalTable(6,1, 4).
+evalTable(6,2, 6).
+evalTable(6,3, 8).
+evalTable(6,4, 8).
+evalTable(6,5,6).
+evalTable(6,6,4).
 
-valueSumColumnEmpty(Player, Move, Value) :- column(Move,Y), Y1 is Y+1, sumColumn(Move,6,Y1,Value).
+evalTable(7,1, 3).
+evalTable(7,2, 4).
+evalTable(7,3, 5).
+evalTable(7,4, 5).
+evalTable(7,5, 4).
+evalTable(7,6, 3).
 
-sumColumn(X,Limit,Limit,Value) :- evalTable(X,Limit, Value).
-sumColumn(X,Y,Limit,Somme) :- Y>=Limit,evalTable(X,Y, Value),  Y1 is (Y-1), sumColumn(X,Y1,Limit,Somme2), Somme is Somme2+Value .
+valuesumColumn(Player,Value,_,_):-canWin(Player,_),!,Value is 1000.
+valuesumColumn(Player,Value,_,_):-changePlayer(Player,Opp),canWin(Opp,_),!,Value is 1.
+valuesumColumn(Player,Value,7,1):-evalTable(7,1,Total),
+    (piece(7,1,Player) -> Value is Total;
+     piece(7,1,'?') ->  Value is 0;
+     Value is -Total
+     ).
+valuesumColumn(Player,Value,7,J):-evalTable(7,J,Total),J1 is J-1,valuesumColumn(Player,Value1,1,J1),
+    (piece(7,J,Player) -> Value is Value1+Total;
+     piece(7,J,'?') ->  Value is Value1;
+     Value is Value1-Total
+     ),!.
+valuesumColumn(Player,Value,I,J):-evalTable(I,J,Total),I1 is I+1,valuesumColumn(Player,Value1,I1,J),
+    (piece(I,J,Player) -> Value is Value1+Total;
+     piece(I,J,'?') ->  Value is Value1;
+     Value is Value1-Total
+    ),!.
+
